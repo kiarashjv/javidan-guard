@@ -20,6 +20,7 @@
     "empty": "No records yet.",
     "lastKnownLocation": "Last known location",
     "viewProfile": "View profile",
+    "historyLink": "View history",
     "status": {
       "active": "Active",
       "arrested": "Arrested",
@@ -87,6 +88,7 @@
     "title": "Victims",
     "subtitle": "Preserve records of victims with dignity, verification, and historical integrity.",
     "ctaReport": "Report a victim",
+    "historyLink": "View history",
     "loading": "Loading records...",
     "empty": "No records yet.",
     "placeholderTitle": "Victim records coming soon",
@@ -111,6 +113,13 @@
       "reason": "Reason for submission",
       "submit": "Submit record",
       "submitting": "Submitting..."
+    },
+    "history": {
+      "title": "History",
+      "subtitle": "Past versions and audit trail.",
+      "loading": "Loading history...",
+      "empty": "No history found.",
+      "back": "Back"
     },
     "status": {
       "murdered": "Murdered",

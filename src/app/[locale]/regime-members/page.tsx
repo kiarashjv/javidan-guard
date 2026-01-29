@@ -282,6 +282,11 @@ export default function RegimeMembersPage() {
                     {t("viewProfile")}
                   </Link>
                 </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href={`/${locale}/regime-members/${member._id}/history`}>
+                    {t("historyLink")}
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}

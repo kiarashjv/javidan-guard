@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,10 @@ import {
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import type { VictimStatus } from "@/types/records";
+import Link from "next/link";
 
 export default function VictimsPage() {
+  const locale = useLocale();
   const t = useTranslations("victims");
   const victims = useQuery(api.victims.listCurrent, {});
   const createVictim = useMutation(api.victims.create);
@@ -334,6 +336,13 @@ export default function VictimsPage() {
               </CardHeader>
               <CardContent className="text-sm text-zinc-600">
                 {victim.circumstances}
+              </CardContent>
+              <CardContent>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/${locale}/victims/${victim._id}/history`}>
+                    {t("historyLink")}
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}

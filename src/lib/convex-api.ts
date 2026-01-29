@@ -114,4 +114,16 @@ export const api = {
       boolean
     >("pendingUpdates:rejectUpdate"),
   },
+  history: {
+    regimeMembers: makeFunctionReference<
+      "query",
+      { id: string },
+      { current: RegimeMember; history: RegimeMember[] } | null
+    >("history:getRegimeMemberHistory"),
+    victims: makeFunctionReference<
+      "query",
+      { id: string },
+      { current: Victim; history: Victim[] } | null
+    >("history:getVictimHistory"),
+  },
 } as const;
