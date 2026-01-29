@@ -26,8 +26,8 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = await getMessages();
-  const t = await getTranslations("nav");
+  const messages = await getMessages({ locale });
+  const t = await getTranslations({ locale, namespace: "nav" });
   const direction = locale === "fa" ? "rtl" : "ltr";
 
   return (
