@@ -3,6 +3,7 @@ import type { MutationCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { logAudit } from "./lib/audit";
+import { checkAndRecordContribution } from "./lib/rateLimit";
 
 const REQUIRED_VERIFICATIONS = 3;
 const EXPIRES_IN_DAYS = 30;
@@ -43,6 +44,7 @@ export const proposeUpdate = mutation({
     userAgent: v.string(),
   },
   handler: async (ctx, args) => {
+    await checkAndRecordContribution(ctx, args.proposedBy);
     const now = Date.now();
     const expiresAt = now + EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000;
     const targetSnapshot = await ctx.db.get(args.targetId);
@@ -89,6 +91,7 @@ export const verifyUpdate = mutation({
     userAgent: v.string(),
   },
   handler: async (ctx, args) => {
+    await checkAndRecordContribution(ctx, args.sessionId);
     const pendingUpdate = await ctx.db.get(args.pendingUpdateId);
 
     if (!pendingUpdate) {

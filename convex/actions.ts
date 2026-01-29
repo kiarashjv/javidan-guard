@@ -7,6 +7,7 @@ import {
 } from "convex/server";
 import { v, type GenericId } from "convex/values";
 import { logAudit } from "./lib/audit";
+import { checkAndRecordContribution } from "./lib/rateLimit";
 
 type DataModel = GenericDataModel;
 type QueryCtx = GenericQueryCtx<DataModel>;
@@ -71,6 +72,7 @@ export const create = mutationGeneric({
       reason: string;
     }
   ) => {
+    await checkAndRecordContribution(ctx, args.createdBySession);
     const now = Date.now();
 
     const id = await ctx.db.insert("actions", {
