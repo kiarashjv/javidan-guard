@@ -32,10 +32,10 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className="min-h-screen bg-background" dir={direction}>
+      <div className="min-h-screen flex flex-col bg-background" dir={direction}>
         {/* Modern Clean Header */}
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-          <div className="container flex h-16 items-center justify-between px-4">
+          <div className="mx-auto max-w-7xl w-full flex h-16 items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-6">
               <Link href={`/${locale}`} className="flex items-center space-x-2">
                 <span className="font-bold text-xl">Iran Revolution Platform</span>
@@ -60,11 +60,11 @@ export default async function LocaleLayout({
         </header>
 
         {/* Main Content */}
-        <main className="container px-4 py-8 md:py-12">{children}</main>
+        <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 md:px-6 md:py-12">{children}</main>
 
         {/* Minimal Footer */}
-        <footer className="border-t">
-          <div className="container flex flex-col gap-4 py-10 md:flex-row md:justify-between">
+        <footer className="mt-auto border-t">
+          <div className="mx-auto max-w-7xl w-full flex flex-col gap-4 py-10 px-4 md:px-6 md:flex-row md:justify-between">
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold">Iran Revolution Accountability Platform</p>
               <p className="text-sm text-muted-foreground">
