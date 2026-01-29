@@ -9,6 +9,7 @@
     "language": "زبان",
     "regimeMembers": "اعضای رژیم",
     "victims": "قربانیان",
+    "actions": "اقدامات",
     "pending": "به‌روزرسانی‌ها"
   },
   "regimeMembers": {
@@ -82,7 +83,71 @@
     "empty": "موردی در انتظار نیست.",
     "verify": "تایید ویرایش",
     "proposedChanges": "تغییرات پیشنهادی",
-    "regimeMemberLabel": "عضو رژیم"
+    "filters": {
+      "regimeMembers": "اعضای رژیم",
+      "victims": "قربانیان",
+      "actions": "اقدامات"
+    },
+    "labels": {
+      "regimeMembers": "عضو رژیم",
+      "victims": "قربانی",
+      "actions": "اقدام"
+    }
+  },
+  "actions": {
+    "title": "اقدامات و وقایع",
+    "subtitle": "ثبت وقایع مرتبط با اعضای رژیم و قربانیان.",
+    "loading": "در حال بارگذاری...",
+    "empty": "هنوز اقدامی ثبت نشده است.",
+    "view": "مشاهده"
+  },
+  "actionDetail": {
+    "title": "جزئیات اقدام",
+    "subtitle": "جزئیات را مرور کنید و پیشنهاد ویرایش دهید.",
+    "loading": "در حال بارگذاری...",
+    "notFound": "اقدام یافت نشد.",
+    "recordId": "شناسه پرونده",
+    "back": "بازگشت",
+    "propose": {
+      "title": "ثبت پیشنهاد ویرایش",
+      "subtitle": "ویرایش‌ها بعد از ۳ تایید رسمی می‌شوند.",
+      "actionType": "نوع اقدام",
+      "date": "تاریخ",
+      "location": "محل",
+      "description": "شرح",
+      "reason": "دلیل ویرایش",
+      "submit": "ارسال ویرایش",
+      "submitting": "در حال ارسال..."
+    }
+  },
+  "victimDetail": {
+    "title": "پروفایل قربانی",
+    "subtitle": "جزئیات را مرور کنید و پیشنهاد ویرایش دهید.",
+    "loading": "در حال بارگذاری...",
+    "notFound": "قربانی یافت نشد.",
+    "recordId": "شناسه پرونده",
+    "hometown": "زادگاه",
+    "back": "بازگشت",
+    "status": {
+      "murdered": "کشته‌شده",
+      "captured": "بازداشت‌شده",
+      "vanished": "ناپدید",
+      "released": "آزاد شده",
+      "confirmed_dead": "مرگ تاییدشده"
+    },
+    "propose": {
+      "title": "ثبت پیشنهاد ویرایش",
+      "subtitle": "ویرایش‌ها بعد از ۳ تایید رسمی می‌شوند.",
+      "name": "نام",
+      "hometown": "زادگاه",
+      "status": "وضعیت",
+      "incidentDate": "تاریخ حادثه",
+      "incidentLocation": "محل حادثه",
+      "circumstances": "شرح واقعه",
+      "reason": "دلیل ویرایش",
+      "submit": "ارسال ویرایش",
+      "submitting": "در حال ارسال..."
+    }
   },
   "victims": {
     "title": "قربانیان",

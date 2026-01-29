@@ -65,6 +65,9 @@ export const api = {
     listCurrent: makeFunctionReference<"query", Record<string, never>, unknown[]>(
       "actions:listCurrent"
     ),
+    getById: makeFunctionReference<"query", { id: string }, unknown | null>(
+      "actions:getById"
+    ),
   },
   pendingUpdates: {
     listPending: makeFunctionReference<

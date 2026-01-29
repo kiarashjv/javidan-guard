@@ -1,0 +1,193 @@
+"use client";
+
+import Link from "next/link";
+import { useMutation, useQuery } from "convex/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { api } from "@/lib/convex-api";
+import { getClientMeta, getSessionId } from "@/lib/session";
+import { serializeChanges } from "@/lib/pending-updates";
+
+export default function ActionDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const locale = useLocale();
+  const t = useTranslations("actionDetail");
+  const action = useQuery(api.actions.getById, { id: params.id });
+  const proposeUpdate = useMutation(api.pendingUpdates.propose);
+
+  const [formState, setFormState] = useState({
+    actionType: "",
+    date: "",
+    location: "",
+    description: "",
+    reason: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handlePropose(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!action) {
+      return;
+    }
+
+    const proposedChanges = Object.fromEntries(
+      Object.entries(formState).filter(([key, value]) => key !== "reason" && value.trim().length > 0)
+    ) as Record<string, string>;
+
+    if (Object.keys(proposedChanges).length === 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    const sessionId = getSessionId();
+    const clientMeta = getClientMeta();
+
+    await proposeUpdate({
+      targetCollection: "actions",
+      targetId: (action as { _id: string })._id,
+      proposedChanges: serializeChanges(proposedChanges),
+      reason: formState.reason.trim(),
+      proposedBy: sessionId,
+      ipHash: clientMeta.ipHash,
+      userAgent: clientMeta.userAgent,
+    });
+
+    setFormState({
+      actionType: "",
+      date: "",
+      location: "",
+      description: "",
+      reason: "",
+    });
+    setIsSubmitting(false);
+  }
+
+  if (action === undefined) {
+    return <div className="text-sm text-zinc-500">{t("loading")}</div>;
+  }
+
+  if (!action) {
+    return <div className="text-sm text-zinc-500">{t("notFound")}</div>;
+  }
+
+  const typed = action as {
+    _id: string;
+    actionType: string;
+    location: string;
+    date: string;
+    description: string;
+  };
+
+  return (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1 text-start">
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="text-sm text-zinc-600">{t("subtitle")}</p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/${locale}/actions`}>{t("back")}</Link>
+        </Button>
+      </div>
+
+      <Card className="border border-zinc-200">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>{typed.actionType}</CardTitle>
+            <Badge variant="secondary">{typed.date}</Badge>
+          </div>
+          <CardDescription>{typed.location}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm text-zinc-600">
+          <div>
+            {t("recordId")}: {typed._id}
+          </div>
+          <div>{typed.description}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="border border-zinc-200">
+        <CardHeader>
+          <CardTitle>{t("propose.title")}</CardTitle>
+          <CardDescription>{t("propose.subtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4" onSubmit={handlePropose}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="update-action-type">{t("propose.actionType")}</Label>
+                <Input
+                  id="update-action-type"
+                  value={formState.actionType}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, actionType: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="update-action-date">{t("propose.date")}</Label>
+                <Input
+                  id="update-action-date"
+                  value={formState.date}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, date: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="update-action-location">{t("propose.location")}</Label>
+                <Input
+                  id="update-action-location"
+                  value={formState.location}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, location: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="update-action-description">{t("propose.description")}</Label>
+                <Textarea
+                  id="update-action-description"
+                  value={formState.description}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, description: event.target.value }))
+                  }
+                />
+              </div>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="update-action-reason">{t("propose.reason")}</Label>
+              <Textarea
+                id="update-action-reason"
+                value={formState.reason}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, reason: event.target.value }))
+                }
+              />
+            </div>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? t("propose.submitting") : t("propose.submit")}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}

@@ -9,6 +9,7 @@
     "language": "Language",
     "regimeMembers": "Regime members",
     "victims": "Victims",
+    "actions": "Actions",
     "pending": "Pending updates"
   },
   "regimeMembers": {
@@ -82,7 +83,71 @@
     "empty": "No pending updates.",
     "verify": "Verify update",
     "proposedChanges": "Proposed changes",
-    "regimeMemberLabel": "Regime member"
+    "filters": {
+      "regimeMembers": "Regime members",
+      "victims": "Victims",
+      "actions": "Actions"
+    },
+    "labels": {
+      "regimeMembers": "Regime member",
+      "victims": "Victim",
+      "actions": "Action"
+    }
+  },
+  "actions": {
+    "title": "Actions & incidents",
+    "subtitle": "Document incidents linked to regime members and victims.",
+    "loading": "Loading actions...",
+    "empty": "No actions yet.",
+    "view": "View action"
+  },
+  "actionDetail": {
+    "title": "Action details",
+    "subtitle": "Review the incident record and propose updates.",
+    "loading": "Loading action...",
+    "notFound": "Action not found.",
+    "recordId": "Record ID",
+    "back": "Back to list",
+    "propose": {
+      "title": "Propose an update",
+      "subtitle": "Changes require 3 confirmations to become official.",
+      "actionType": "Action type",
+      "date": "Date",
+      "location": "Location",
+      "description": "Description",
+      "reason": "Reason for update",
+      "submit": "Submit update",
+      "submitting": "Submitting..."
+    }
+  },
+  "victimDetail": {
+    "title": "Victim profile",
+    "subtitle": "Review details and propose updates.",
+    "loading": "Loading victim...",
+    "notFound": "Victim not found.",
+    "recordId": "Record ID",
+    "hometown": "Hometown",
+    "back": "Back to list",
+    "status": {
+      "murdered": "Murdered",
+      "captured": "Captured",
+      "vanished": "Vanished",
+      "released": "Released",
+      "confirmed_dead": "Confirmed dead"
+    },
+    "propose": {
+      "title": "Propose an update",
+      "subtitle": "Changes require 3 confirmations to become official.",
+      "name": "Name",
+      "hometown": "Hometown",
+      "status": "Status",
+      "incidentDate": "Incident date",
+      "incidentLocation": "Incident location",
+      "circumstances": "Circumstances",
+      "reason": "Reason for update",
+      "submit": "Submit update",
+      "submitting": "Submitting..."
+    }
   },
   "victims": {
     "title": "Victims",

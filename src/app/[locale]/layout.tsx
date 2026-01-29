@@ -47,6 +47,9 @@ export default async function LocaleLayout({
                   <Link href={`/${locale}/victims`}>{t("victims")}</Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
+                  <Link href={`/${locale}/actions`}>{t("actions")}</Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm">
                   <Link href={`/${locale}/pending`}>{t("pending")}</Link>
                 </Button>
               </nav>
