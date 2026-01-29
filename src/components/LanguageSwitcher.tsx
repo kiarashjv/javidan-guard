@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { locales, type Locale } from "@/i18n/config";
-import { cn } from "@/lib/utils";
 
 function switchLocalePath(pathname: string, locale: Locale) {
   const segments = pathname.split("/");
@@ -21,7 +19,6 @@ function switchLocalePath(pathname: string, locale: Locale) {
 
 export function LanguageSwitcher({ locale }: { locale: Locale }) {
   const pathname = usePathname();
-  const t = useTranslations("nav");
 
   return (
     <div className="flex items-center gap-2">

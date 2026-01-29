@@ -92,7 +92,11 @@
       "regimeMembers": "عضو رژیم",
       "victims": "قربانی",
       "actions": "اقدام"
-    }
+    },
+    "current": "وضعیت فعلی",
+    "proposed": "پیشنهاد",
+    "unknown": "نامشخص",
+    "viewTarget": "مشاهده پرونده"
   },
   "actions": {
     "title": "اقدامات و وقایع",

@@ -98,6 +98,7 @@ export const api = {
         targetCollection: string;
         targetId: string;
         proposedChanges: string;
+        targetSnapshot?: string;
         requiredVerifications: number;
         currentVerifications: number;
       }[]
@@ -147,6 +148,7 @@ export const api = {
         targetCollection: string;
         targetId: string;
         proposedChanges: string;
+        targetSnapshot?: string;
         requiredVerifications: number;
         currentVerifications: number;
       }[]

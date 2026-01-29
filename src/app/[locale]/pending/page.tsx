@@ -2,16 +2,23 @@
 
 import { useState } from "react";
 import { useQuery } from "convex/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { PendingUpdateCard } from "@/components/verification/PendingUpdateCard";
 import { api } from "@/lib/convex-api";
 
 export default function PendingUpdatesPage() {
+  const locale = useLocale();
   const t = useTranslations("pendingUpdates");
   const [collection, setCollection] = useState<
     "regimeMembers" | "victims" | "actions"
   >("regimeMembers");
+  const routeSegment =
+    collection === "regimeMembers"
+      ? "regime-members"
+      : collection === "victims"
+        ? "victims"
+        : "actions";
   const pending = useQuery(api.pendingUpdates.listPending, {
     targetCollection: collection,
   });
@@ -60,6 +67,8 @@ export default function PendingUpdatesPage() {
               id={update._id}
               targetLabel={t(`labels.${collection}`)}
               proposedChanges={update.proposedChanges}
+              targetSnapshot={update.targetSnapshot}
+              targetHref={`/${locale}/${routeSegment}/${update.targetId}`}
               currentVerifications={update.currentVerifications}
               requiredVerifications={update.requiredVerifications}
             />

@@ -92,7 +92,11 @@
       "regimeMembers": "Regime member",
       "victims": "Victim",
       "actions": "Action"
-    }
+    },
+    "current": "Current",
+    "proposed": "Proposed",
+    "unknown": "Unknown",
+    "viewTarget": "View record"
   },
   "actions": {
     "title": "Actions & incidents",
