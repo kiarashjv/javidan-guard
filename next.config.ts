@@ -3,16 +3,21 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n.ts");
 
+const isDev = process.env.NODE_ENV !== "production";
+const scriptSrc = isDev
+  ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'; "
+  : "script-src 'self' 'unsafe-eval'; ";
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value:
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-eval'; " +
+      scriptSrc +
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' data: blob:; " +
       "font-src 'self' data:; " +
-      "connect-src 'self' https://*.convex.cloud; " +
+      "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud; " +
       "frame-ancestors 'none'; " +
       "base-uri 'self'; " +
       "form-action 'self'",
