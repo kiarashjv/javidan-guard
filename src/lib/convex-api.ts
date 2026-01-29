@@ -68,6 +68,26 @@ export const api = {
     getById: makeFunctionReference<"query", { id: string }, unknown | null>(
       "actions:getById"
     ),
+    create: makeFunctionReference<
+      "mutation",
+      {
+        perpetratorId: string;
+        victimIds: string[];
+        date: string;
+        location: string;
+        description: string;
+        actionType: "killing" | "torture" | "arrest" | "assault" | "other";
+        evidenceUrls: string[];
+        videoLinks: string[];
+        documentLinks: string[];
+        witnessStatements: string[];
+        createdBySession: string;
+        ipHash: string;
+        userAgent: string;
+        reason: string;
+      },
+      string
+    >("actions:create"),
   },
   pendingUpdates: {
     listPending: makeFunctionReference<

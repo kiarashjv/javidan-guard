@@ -99,7 +99,32 @@
     "subtitle": "Document incidents linked to regime members and victims.",
     "loading": "Loading actions...",
     "empty": "No actions yet.",
-    "view": "View action"
+    "view": "View action",
+    "types": {
+      "killing": "Killing",
+      "torture": "Torture",
+      "arrest": "Arrest",
+      "assault": "Assault",
+      "other": "Other"
+    },
+    "form": {
+      "title": "Report an action",
+      "subtitle": "Provide verified information about an incident.",
+      "actionType": "Action type",
+      "actionTypePlaceholder": "Select a type",
+      "date": "Date",
+      "location": "Location",
+      "description": "Description",
+      "perpetratorId": "Perpetrator ID",
+      "victimIds": "Victim IDs (comma-separated)",
+      "evidenceUrls": "Evidence URLs (comma-separated)",
+      "videoLinks": "Video links (comma-separated)",
+      "documentLinks": "Document links (comma-separated)",
+      "witnessStatements": "Witness statements (comma-separated)",
+      "reason": "Reason for submission",
+      "submit": "Submit action",
+      "submitting": "Submitting..."
+    }
   },
   "actionDetail": {
     "title": "Action details",

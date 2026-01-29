@@ -99,7 +99,32 @@
     "subtitle": "ثبت وقایع مرتبط با اعضای رژیم و قربانیان.",
     "loading": "در حال بارگذاری...",
     "empty": "هنوز اقدامی ثبت نشده است.",
-    "view": "مشاهده"
+    "view": "مشاهده",
+    "types": {
+      "killing": "کشتار",
+      "torture": "شکنجه",
+      "arrest": "بازداشت",
+      "assault": "حمله",
+      "other": "سایر"
+    },
+    "form": {
+      "title": "ثبت اقدام",
+      "subtitle": "اطلاعات تاییدشده درباره یک واقعه را ثبت کنید.",
+      "actionType": "نوع اقدام",
+      "actionTypePlaceholder": "انتخاب نوع",
+      "date": "تاریخ",
+      "location": "محل",
+      "description": "شرح",
+      "perpetratorId": "شناسه عامل",
+      "victimIds": "شناسه قربانیان (با کاما)",
+      "evidenceUrls": "لینک شواهد (با کاما)",
+      "videoLinks": "لینک ویدیو (با کاما)",
+      "documentLinks": "لینک اسناد (با کاما)",
+      "witnessStatements": "شهادت‌ها (با کاما)",
+      "reason": "دلیل ارسال",
+      "submit": "ثبت اقدام",
+      "submitting": "در حال ثبت..."
+    }
   },
   "actionDetail": {
     "title": "جزئیات اقدام",
