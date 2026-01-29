@@ -8,6 +8,7 @@ import {
 import { v, type GenericId } from "convex/values";
 import { logAudit } from "./lib/audit";
 import { checkAndRecordContribution } from "./lib/rateLimit";
+import { adjustTrustScore } from "./lib/trustScore";
 
 type DataModel = GenericDataModel;
 type QueryCtx = GenericQueryCtx<DataModel>;
@@ -112,6 +113,8 @@ export const create = mutationGeneric({
       userAgent: args.userAgent,
       reason: args.reason,
     });
+
+    await adjustTrustScore(ctx, args.createdBySession, 1);
 
     return id;
   },

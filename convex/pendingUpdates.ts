@@ -4,6 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { logAudit } from "./lib/audit";
 import { checkAndRecordContribution } from "./lib/rateLimit";
+import { adjustTrustScore, recordVerification } from "./lib/trustScore";
 
 const REQUIRED_VERIFICATIONS = 3;
 const EXPIRES_IN_DAYS = 30;
@@ -79,6 +80,8 @@ export const proposeUpdate = mutation({
       reason: args.reason,
     });
 
+    await adjustTrustScore(ctx, args.proposedBy, 1);
+
     return id;
   },
 });
@@ -124,6 +127,9 @@ export const verifyUpdate = mutation({
       userAgent: args.userAgent,
       reason: "verification",
     });
+
+    await recordVerification(ctx, args.sessionId);
+    await adjustTrustScore(ctx, args.sessionId, 1);
 
     if (updatedCount >= REQUIRED_VERIFICATIONS) {
       await approveUpdate(ctx, args.pendingUpdateId, pendingUpdate);
@@ -220,6 +226,8 @@ export const rejectUpdate = mutation({
       userAgent: args.userAgent,
       reason: args.reason,
     });
+
+    await adjustTrustScore(ctx, args.sessionId, -2);
 
     return true;
   },
