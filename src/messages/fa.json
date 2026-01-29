@@ -6,6 +6,44 @@
     "ctaSecondary": "مشاهده پرونده‌ها"
   },
   "nav": {
-    "language": "زبان"
+    "language": "زبان",
+    "regimeMembers": "اعضای رژیم",
+    "victims": "قربانیان"
+  },
+  "regimeMembers": {
+    "title": "اعضای رژیم",
+    "subtitle": "ثبت هویت، واحد، و نقش‌ها همراه با شواهد و تایید جمعی.",
+    "searchPlaceholder": "جستجو بر اساس نام، واحد یا محل",
+    "ctaReport": "ثبت عضو جدید",
+    "lastKnownLocation": "آخرین موقعیت",
+    "viewProfile": "مشاهده پروفایل",
+    "status": {
+      "active": "فعال",
+      "arrested": "بازداشت‌شده",
+      "fled": "متواری",
+      "deceased": "کشته‌شده",
+      "unknown": "نامشخص"
+    }
+  },
+  "regimeMember": {
+    "title": "پروفایل عضو رژیم",
+    "subtitle": "این صفحه تا اتصال داده‌های Convex نمونه است.",
+    "back": "بازگشت به لیست",
+    "recordId": "شناسه پرونده",
+    "location": "آخرین موقعیت",
+    "notes": "شواهد، تاریخچه و وضعیت تایید در اینجا نمایش داده می‌شود.",
+    "placeholderName": "پروفایل نمونه",
+    "placeholderRole": "سپاه - فرماندهی",
+    "status": {
+      "active": "فعال"
+    }
+  },
+  "victims": {
+    "title": "قربانیان",
+    "subtitle": "ثبت با احترام، تاییدپذیری و حفاظت تاریخی.",
+    "ctaReport": "ثبت قربانی",
+    "placeholderTitle": "ثبت‌ها به‌زودی",
+    "placeholderSubtitle": "پرونده‌های تایید‌شده در این بخش نمایش داده می‌شوند.",
+    "placeholderBody": "این بخش از شواهد، خط زمانی و شهادت‌ها پشتیبانی خواهد کرد."
   }
 }

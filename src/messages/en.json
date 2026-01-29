@@ -6,6 +6,44 @@
     "ctaSecondary": "Browse records"
   },
   "nav": {
-    "language": "Language"
+    "language": "Language",
+    "regimeMembers": "Regime members",
+    "victims": "Victims"
+  },
+  "regimeMembers": {
+    "title": "Regime members",
+    "subtitle": "Document officials, units, and identities with evidence and verification.",
+    "searchPlaceholder": "Search by name, unit, or location",
+    "ctaReport": "Report a member",
+    "lastKnownLocation": "Last known location",
+    "viewProfile": "View profile",
+    "status": {
+      "active": "Active",
+      "arrested": "Arrested",
+      "fled": "Fled",
+      "deceased": "Deceased",
+      "unknown": "Unknown"
+    }
+  },
+  "regimeMember": {
+    "title": "Regime member profile",
+    "subtitle": "This is a placeholder profile until Convex data is wired.",
+    "back": "Back to list",
+    "recordId": "Record ID",
+    "location": "Last known location",
+    "notes": "Evidence, history, and verification status will appear here.",
+    "placeholderName": "Sample profile",
+    "placeholderRole": "IRGC - Command",
+    "status": {
+      "active": "Active"
+    }
+  },
+  "victims": {
+    "title": "Victims",
+    "subtitle": "Preserve records of victims with dignity, verification, and historical integrity.",
+    "ctaReport": "Report a victim",
+    "placeholderTitle": "Victim records coming soon",
+    "placeholderSubtitle": "We will list verified records here.",
+    "placeholderBody": "This section will support evidence, timelines, and witness accounts."
   }
 }

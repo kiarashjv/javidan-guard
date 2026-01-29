@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import { locales, type Locale } from "@/i18n/config";
 
 function switchLocalePath(pathname: string, locale: Locale) {
@@ -18,26 +20,24 @@ function switchLocalePath(pathname: string, locale: Locale) {
 
 export function LanguageSwitcher({ locale }: { locale: Locale }) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="text-zinc-500">Language</span>
+      <span className="text-zinc-500">{t("language")}</span>
       {locales.map((target) => {
         const isActive = target === locale;
         const href = switchLocalePath(pathname, target);
 
         return (
-          <Link
+          <Button
             key={target}
-            href={href}
-            className={
-              isActive
-                ? "rounded-full bg-zinc-900 px-3 py-1 text-white"
-                : "rounded-full border border-zinc-300 px-3 py-1 text-zinc-700"
-            }
+            asChild
+            variant={isActive ? "default" : "outline"}
+            size="xs"
           >
-            {target.toUpperCase()}
-          </Link>
+            <Link href={href}>{target.toUpperCase()}</Link>
+          </Button>
         );
       })}
     </div>
