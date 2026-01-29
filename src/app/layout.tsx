@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono, Vazirmatn } from "next/font/google";
-import { defaultLocale, localeCookieName, locales } from "@/i18n/config";
+import { defaultLocale, locales } from "@/i18n/config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,15 +29,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get(localeCookieName)?.value;
-  const locale = locales.find((item) => item === cookieLocale) ?? defaultLocale;
+  const headerStore = await headers();
+  const headerLocale = headerStore.get("x-next-intl-locale");
+  const localeCandidate = headerLocale ?? defaultLocale;
+  const locale = locales.find((item) => item === localeCandidate) ?? defaultLocale;
   const dir = locale === "fa" ? "rtl" : "ltr";
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${vazirmatn.variable} antialiased`}
+        dir={dir}
       >
         {children}
       </body>

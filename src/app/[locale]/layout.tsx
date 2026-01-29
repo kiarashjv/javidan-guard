@@ -28,10 +28,11 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
   const t = await getTranslations("nav");
+  const direction = locale === "fa" ? "rtl" : "ltr";
 
   return (
-    <NextIntlClientProvider messages={messages}>
-      <div className="min-h-screen bg-zinc-50 text-zinc-950">
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <div className="min-h-screen bg-zinc-50 text-zinc-950" dir={direction}>
         <header className="border-b border-zinc-200 bg-white">
           <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
