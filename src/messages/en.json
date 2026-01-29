@@ -25,6 +25,23 @@
       "fled": "Fled",
       "deceased": "Deceased",
       "unknown": "Unknown"
+    },
+    "form": {
+      "title": "Report a regime member",
+      "subtitle": "Provide only verified information and evidence.",
+      "name": "Full name",
+      "organization": "Organization",
+      "unit": "Unit",
+      "position": "Position",
+      "rank": "Rank",
+      "status": "Status",
+      "statusPlaceholder": "Select a status",
+      "location": "Last known location",
+      "aliases": "Aliases (comma-separated)",
+      "photos": "Photo URLs (comma-separated)",
+      "reason": "Reason for submission",
+      "submit": "Submit record",
+      "submitting": "Submitting..."
     }
   },
   "regimeMember": {
@@ -50,6 +67,33 @@
     "empty": "No records yet.",
     "placeholderTitle": "Victim records coming soon",
     "placeholderSubtitle": "We will list verified records here.",
-    "placeholderBody": "This section will support evidence, timelines, and witness accounts."
+    "placeholderBody": "This section will support evidence, timelines, and witness accounts.",
+    "form": {
+      "title": "Report a victim",
+      "subtitle": "Provide respectful, verified details for historical record.",
+      "name": "Full name",
+      "age": "Age",
+      "hometown": "Hometown",
+      "status": "Status",
+      "statusPlaceholder": "Select a status",
+      "incidentDate": "Incident date",
+      "incidentLocation": "Incident location",
+      "circumstances": "Circumstances",
+      "evidenceLinks": "Evidence links (comma-separated)",
+      "newsReports": "News reports (comma-separated)",
+      "witnessAccounts": "Witness accounts (comma-separated)",
+      "linkedPerpetrators": "Linked perpetrators (IDs, comma-separated)",
+      "photos": "Photo URLs (comma-separated)",
+      "reason": "Reason for submission",
+      "submit": "Submit record",
+      "submitting": "Submitting..."
+    },
+    "status": {
+      "murdered": "Murdered",
+      "captured": "Captured",
+      "vanished": "Vanished",
+      "released": "Released",
+      "confirmed_dead": "Confirmed dead"
+    }
   }
 }

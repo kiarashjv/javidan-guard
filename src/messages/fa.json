@@ -25,6 +25,23 @@
       "fled": "متواری",
       "deceased": "کشته‌شده",
       "unknown": "نامشخص"
+    },
+    "form": {
+      "title": "ثبت عضو رژیم",
+      "subtitle": "فقط اطلاعات تاییدشده و مستند را ارسال کنید.",
+      "name": "نام کامل",
+      "organization": "سازمان",
+      "unit": "واحد",
+      "position": "سمت",
+      "rank": "رتبه",
+      "status": "وضعیت",
+      "statusPlaceholder": "انتخاب وضعیت",
+      "location": "آخرین موقعیت",
+      "aliases": "نام‌های دیگر (با کاما)",
+      "photos": "آدرس عکس‌ها (با کاما)",
+      "reason": "دلیل ارسال",
+      "submit": "ثبت پرونده",
+      "submitting": "در حال ثبت..."
     }
   },
   "regimeMember": {
@@ -50,6 +67,33 @@
     "empty": "هیچ موردی ثبت نشده است.",
     "placeholderTitle": "ثبت‌ها به‌زودی",
     "placeholderSubtitle": "پرونده‌های تایید‌شده در این بخش نمایش داده می‌شوند.",
-    "placeholderBody": "این بخش از شواهد، خط زمانی و شهادت‌ها پشتیبانی خواهد کرد."
+    "placeholderBody": "این بخش از شواهد، خط زمانی و شهادت‌ها پشتیبانی خواهد کرد.",
+    "form": {
+      "title": "ثبت قربانی",
+      "subtitle": "اطلاعات دقیق و محترمانه را برای ثبت تاریخی ارائه کنید.",
+      "name": "نام کامل",
+      "age": "سن",
+      "hometown": "زادگاه",
+      "status": "وضعیت",
+      "statusPlaceholder": "انتخاب وضعیت",
+      "incidentDate": "تاریخ حادثه",
+      "incidentLocation": "محل حادثه",
+      "circumstances": "شرح واقعه",
+      "evidenceLinks": "لینک‌های مدرک (با کاما)",
+      "newsReports": "گزارش‌های خبری (با کاما)",
+      "witnessAccounts": "شهادت‌ها (با کاما)",
+      "linkedPerpetrators": "مرتبطین (شناسه‌ها با کاما)",
+      "photos": "آدرس عکس‌ها (با کاما)",
+      "reason": "دلیل ارسال",
+      "submit": "ثبت پرونده",
+      "submitting": "در حال ثبت..."
+    },
+    "status": {
+      "murdered": "کشته‌شده",
+      "captured": "بازداشت‌شده",
+      "vanished": "ناپدید",
+      "released": "آزاد شده",
+      "confirmed_dead": "مرگ تاییدشده"
+    }
   }
 }
