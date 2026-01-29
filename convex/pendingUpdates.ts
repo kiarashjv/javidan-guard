@@ -6,8 +6,17 @@ import { logAudit } from "./lib/audit";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore, recordVerification } from "./lib/trustScore";
 
-const REQUIRED_VERIFICATIONS = 3;
 const EXPIRES_IN_DAYS = 30;
+
+function requiredVerificationsForTrust(trustScore: number) {
+  if (trustScore >= 80) {
+    return 2;
+  }
+  if (trustScore >= 50) {
+    return 3;
+  }
+  return 4;
+}
 
 export const listPending = query({
   args: {
@@ -49,6 +58,13 @@ export const proposeUpdate = mutation({
     const now = Date.now();
     const expiresAt = now + EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000;
     const targetSnapshot = await ctx.db.get(args.targetId);
+    const proposer = await ctx.db
+      .query("sessions")
+      .filter((q) => q.eq(q.field("sessionId"), args.proposedBy))
+      .first();
+    const requiredVerifications = proposer
+      ? requiredVerificationsForTrust(proposer.trustScore)
+      : 3;
 
     if (!targetSnapshot) {
       throw new Error("Target record not found.");
@@ -58,7 +74,7 @@ export const proposeUpdate = mutation({
       targetCollection: args.targetCollection,
       targetId: args.targetId,
       proposedChanges: args.proposedChanges,
-      requiredVerifications: REQUIRED_VERIFICATIONS,
+      requiredVerifications,
       currentVerifications: 0,
       verifiedBySessions: [],
       status: "pending",
@@ -131,7 +147,7 @@ export const verifyUpdate = mutation({
     await recordVerification(ctx, args.sessionId);
     await adjustTrustScore(ctx, args.sessionId, 1);
 
-    if (updatedCount >= REQUIRED_VERIFICATIONS) {
+    if (updatedCount >= pendingUpdate.requiredVerifications) {
       await approveUpdate(ctx, args.pendingUpdateId, pendingUpdate);
     }
 
