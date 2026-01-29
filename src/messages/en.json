@@ -1,0 +1,11 @@
+{
+  "home": {
+    "title": "Iran Revolution Accountability Platform",
+    "subtitle": "A public, verification-based archive for documenting regime members and victims.",
+    "ctaPrimary": "Report a case",
+    "ctaSecondary": "Browse records"
+  },
+  "nav": {
+    "language": "Language"
+  }
+}
