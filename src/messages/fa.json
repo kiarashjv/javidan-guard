@@ -8,7 +8,8 @@
   "nav": {
     "language": "زبان",
     "regimeMembers": "اعضای رژیم",
-    "victims": "قربانیان"
+    "victims": "قربانیان",
+    "pending": "به‌روزرسانی‌ها"
   },
   "regimeMembers": {
     "title": "اعضای رژیم",
@@ -57,7 +58,30 @@
     "placeholderRole": "سپاه - فرماندهی",
     "status": {
       "active": "فعال"
+    },
+    "propose": {
+      "title": "ثبت پیشنهاد ویرایش",
+      "subtitle": "ویرایش‌ها بعد از ۳ تایید رسمی می‌شوند.",
+      "name": "نام",
+      "organization": "سازمان",
+      "unit": "واحد",
+      "position": "سمت",
+      "rank": "رتبه",
+      "status": "وضعیت",
+      "location": "آخرین موقعیت",
+      "reason": "دلیل ویرایش",
+      "submit": "ارسال ویرایش",
+      "submitting": "در حال ارسال..."
     }
+  },
+  "pendingUpdates": {
+    "title": "به‌روزرسانی‌های در انتظار",
+    "subtitle": "برای حفظ دقت، ویرایش‌ها را تایید کنید.",
+    "loading": "در حال بارگذاری...",
+    "empty": "موردی در انتظار نیست.",
+    "verify": "تایید ویرایش",
+    "proposedChanges": "تغییرات پیشنهادی",
+    "regimeMemberLabel": "عضو رژیم"
   },
   "victims": {
     "title": "قربانیان",

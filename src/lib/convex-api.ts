@@ -66,4 +66,52 @@ export const api = {
       "actions:listCurrent"
     ),
   },
+  pendingUpdates: {
+    listPending: makeFunctionReference<
+      "query",
+      { targetCollection: "regimeMembers" | "victims" | "actions" },
+      {
+        _id: string;
+        targetCollection: string;
+        targetId: string;
+        proposedChanges: string;
+        requiredVerifications: number;
+        currentVerifications: number;
+      }[]
+    >("pendingUpdates:listPending"),
+    propose: makeFunctionReference<
+      "mutation",
+      {
+        targetCollection: "regimeMembers" | "victims" | "actions";
+        targetId: string;
+        proposedChanges: string;
+        reason: string;
+        proposedBy: string;
+        ipHash: string;
+        userAgent: string;
+      },
+      string
+    >("pendingUpdates:proposeUpdate"),
+    verify: makeFunctionReference<
+      "mutation",
+      {
+        pendingUpdateId: string;
+        sessionId: string;
+        ipHash: string;
+        userAgent: string;
+      },
+      number
+    >("pendingUpdates:verifyUpdate"),
+    reject: makeFunctionReference<
+      "mutation",
+      {
+        pendingUpdateId: string;
+        sessionId: string;
+        ipHash: string;
+        userAgent: string;
+        reason: string;
+      },
+      boolean
+    >("pendingUpdates:rejectUpdate"),
+  },
 } as const;

@@ -103,6 +103,7 @@ export default defineSchema({
     proposedAt: v.number(),
     expiresAt: v.number(),
     reason: v.string(),
+    targetSnapshot: v.string(),
   }),
 
   auditLogs: defineTable({

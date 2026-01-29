@@ -8,7 +8,8 @@
   "nav": {
     "language": "Language",
     "regimeMembers": "Regime members",
-    "victims": "Victims"
+    "victims": "Victims",
+    "pending": "Pending updates"
   },
   "regimeMembers": {
     "title": "Regime members",
@@ -57,7 +58,30 @@
     "placeholderRole": "IRGC - Command",
     "status": {
       "active": "Active"
+    },
+    "propose": {
+      "title": "Propose an update",
+      "subtitle": "Changes require 3 confirmations to become official.",
+      "name": "Name",
+      "organization": "Organization",
+      "unit": "Unit",
+      "position": "Position",
+      "rank": "Rank",
+      "status": "Status",
+      "location": "Last known location",
+      "reason": "Reason for update",
+      "submit": "Submit update",
+      "submitting": "Submitting..."
     }
+  },
+  "pendingUpdates": {
+    "title": "Pending updates",
+    "subtitle": "Verify updates to keep records accurate.",
+    "loading": "Loading pending updates...",
+    "empty": "No pending updates.",
+    "verify": "Verify update",
+    "proposedChanges": "Proposed changes",
+    "regimeMemberLabel": "Regime member"
   },
   "victims": {
     "title": "Victims",

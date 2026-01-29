@@ -46,6 +46,9 @@ export default async function LocaleLayout({
                 <Button asChild variant="ghost" size="sm">
                   <Link href={`/${locale}/victims`}>{t("victims")}</Link>
                 </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href={`/${locale}/pending`}>{t("pending")}</Link>
+                </Button>
               </nav>
             </div>
             <LanguageSwitcher locale={locale} />
