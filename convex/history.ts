@@ -39,3 +39,22 @@ export const getVictimHistory = query({
     };
   },
 });
+
+export const getActionHistory = query({
+  args: { id: v.id("actions") },
+  handler: async (ctx, args) => {
+    const current = await ctx.db.get(args.id);
+    if (!current) {
+      return null;
+    }
+
+    const history = await Promise.all(
+      current.previousVersions.map((versionId) => ctx.db.get(versionId))
+    );
+
+    return {
+      current,
+      history: history.filter(Boolean) as Doc<"actions">[],
+    };
+  },
+});

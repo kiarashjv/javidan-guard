@@ -137,6 +137,7 @@
     "notFound": "Action not found.",
     "recordId": "Record ID",
     "back": "Back to list",
+    "historyLink": "View history",
     "propose": {
       "title": "Propose an update",
       "subtitle": "Changes require 3 confirmations to become official.",

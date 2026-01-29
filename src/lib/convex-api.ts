@@ -165,6 +165,28 @@ export const api = {
       { id: string },
       { current: Victim; history: Victim[] } | null
     >("history:getVictimHistory"),
+    actions: makeFunctionReference<
+      "query",
+      { id: string },
+      {
+        current: {
+          _id: string;
+          actionType: string;
+          location: string;
+          date: string;
+          description: string;
+          createdAt: number;
+        };
+        history: {
+          _id: string;
+          actionType: string;
+          location: string;
+          date: string;
+          description: string;
+          createdAt: number;
+        }[];
+      } | null
+    >("history:getActionHistory"),
   },
   sessions: {
     upsert: makeFunctionReference<

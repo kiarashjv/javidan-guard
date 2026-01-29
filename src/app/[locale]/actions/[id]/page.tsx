@@ -126,6 +126,13 @@ export default function ActionDetailPage({
             {t("recordId")}: {typed._id}
           </div>
           <div>{typed.description}</div>
+          <div>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/${locale}/actions/${typed._id}/history`}>
+                {t("historyLink")}
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
