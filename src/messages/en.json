@@ -15,6 +15,8 @@
     "subtitle": "Document officials, units, and identities with evidence and verification.",
     "searchPlaceholder": "Search by name, unit, or location",
     "ctaReport": "Report a member",
+    "loading": "Loading records...",
+    "empty": "No records yet.",
     "lastKnownLocation": "Last known location",
     "viewProfile": "View profile",
     "status": {
@@ -32,6 +34,8 @@
     "recordId": "Record ID",
     "location": "Last known location",
     "notes": "Evidence, history, and verification status will appear here.",
+    "loading": "Loading profile...",
+    "notFound": "Record not found.",
     "placeholderName": "Sample profile",
     "placeholderRole": "IRGC - Command",
     "status": {
@@ -42,6 +46,8 @@
     "title": "Victims",
     "subtitle": "Preserve records of victims with dignity, verification, and historical integrity.",
     "ctaReport": "Report a victim",
+    "loading": "Loading records...",
+    "empty": "No records yet.",
     "placeholderTitle": "Victim records coming soon",
     "placeholderSubtitle": "We will list verified records here.",
     "placeholderBody": "This section will support evidence, timelines, and witness accounts."

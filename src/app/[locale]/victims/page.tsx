@@ -1,4 +1,7 @@
+"use client";
+
 import { useTranslations } from "next-intl";
+import { useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,9 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { api } from "@/lib/convex-api";
 
 export default function VictimsPage() {
   const t = useTranslations("victims");
+  const victims = useQuery(api.victims.listCurrent, {});
 
   return (
     <section className="space-y-8">
@@ -21,15 +26,27 @@ export default function VictimsPage() {
         <Button className="w-fit">{t("ctaReport")}</Button>
       </div>
 
-      <Card className="border border-zinc-200">
-        <CardHeader>
-          <CardTitle>{t("placeholderTitle")}</CardTitle>
-          <CardDescription>{t("placeholderSubtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-zinc-600">
-          {t("placeholderBody")}
-        </CardContent>
-      </Card>
+      {victims === undefined ? (
+        <div className="text-sm text-zinc-500">{t("loading")}</div>
+      ) : victims.length === 0 ? (
+        <div className="text-sm text-zinc-500">{t("empty")}</div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {victims.map((victim) => (
+            <Card key={victim._id} className="border border-zinc-200">
+              <CardHeader>
+                <CardTitle>{victim.name}</CardTitle>
+                <CardDescription>
+                  {victim.incidentLocation} · {victim.incidentDate}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm text-zinc-600">
+                {victim.circumstances}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { useQuery } from "convex/react";
+import { useLocale, useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,20 +12,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { locales, type Locale } from "@/i18n/config";
+import { api } from "@/lib/convex-api";
 
-export default async function RegimeMemberDetailPage({
+export default function RegimeMemberDetailPage({
   params,
 }: {
-  params: Promise<{ locale: string; id: string }>;
+  params: { locale: string; id: string };
 }) {
-  const { locale: localeParam, id } = await params;
-  const locale = locales.includes(localeParam as Locale)
-    ? (localeParam as Locale)
-    : null;
+  const locale = useLocale();
+  const t = useTranslations("regimeMember");
+  const member = useQuery(api.regimeMembers.getById, { id: params.id });
 
-  const t = await getTranslations("regimeMember");
+  if (member === undefined) {
+    return <div className="text-sm text-zinc-500">{t("loading")}</div>;
+  }
+
+  if (!member) {
+    return <div className="text-sm text-zinc-500">{t("notFound")}</div>;
+  }
 
   return (
     <section className="space-y-6">
@@ -31,23 +39,27 @@ export default async function RegimeMemberDetailPage({
           <p className="text-sm text-zinc-600">{t("subtitle")}</p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href={`/${locale ?? "fa"}/regime-members`}>{t("back")}</Link>
+          <Link href={`/${locale}/regime-members`}>{t("back")}</Link>
         </Button>
       </div>
 
       <Card className="border border-zinc-200">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{t("placeholderName")}</CardTitle>
-            <Badge variant="secondary">{t("status.active")}</Badge>
+            <CardTitle>{member.name}</CardTitle>
+            <Badge variant="secondary">{t(`status.${member.status}`)}</Badge>
           </div>
-          <CardDescription>{t("placeholderRole")}</CardDescription>
+          <CardDescription>
+            {member.organization} · {member.unit}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm text-zinc-600">
           <div>
-            {t("recordId")}: {id}
+            {t("recordId")}: {member._id}
           </div>
-          <div>{t("location")}: Tehran</div>
+          <div>
+            {t("location")}: {member.lastKnownLocation}
+          </div>
           <div>{t("notes")}</div>
         </CardContent>
       </Card>

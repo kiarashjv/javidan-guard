@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Geist, Geist_Mono, Vazirmatn } from "next/font/google";
 import { defaultLocale, locales } from "@/i18n/config";
+import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,7 +42,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${vazirmatn.variable} antialiased`}
         dir={dir}
       >
-        {children}
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );

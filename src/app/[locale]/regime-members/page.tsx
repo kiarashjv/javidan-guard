@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { useQuery } from "convex/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,34 +13,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
-const sampleMembers = [
-  {
-    id: "s1",
-    name: "Hossein Rahimi",
-    role: "IRGC - Tehran Unit",
-    status: "active",
-    location: "Tehran",
-  },
-  {
-    id: "s2",
-    name: "Majid Arjmand",
-    role: "Basij - District 3",
-    status: "unknown",
-    location: "Shiraz",
-  },
-  {
-    id: "s3",
-    name: "Parviz Khodadadi",
-    role: "Police - Special Forces",
-    status: "fled",
-    location: "Tabriz",
-  },
-];
+import { api } from "@/lib/convex-api";
 
 export default function RegimeMembersPage() {
   const locale = useLocale();
   const t = useTranslations("regimeMembers");
+  const members = useQuery(api.regimeMembers.listCurrent, {});
 
   return (
     <section className="space-y-8">
@@ -52,29 +33,39 @@ export default function RegimeMembersPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {sampleMembers.map((member) => (
-          <Card key={member.id} className="border border-zinc-200">
-            <CardHeader className="space-y-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{member.name}</CardTitle>
-                <Badge variant="secondary">{t(`status.${member.status}`)}</Badge>
-              </div>
-              <CardDescription>{member.role}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-sm text-zinc-600">
-                {t("lastKnownLocation")}: {member.location}
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/${locale}/regime-members/${member.id}`}>
-                  {t("viewProfile")}
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {members === undefined ? (
+        <div className="text-sm text-zinc-500">{t("loading")}</div>
+      ) : members.length === 0 ? (
+        <div className="text-sm text-zinc-500">{t("empty")}</div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {members.map((member) => (
+            <Card key={member._id} className="border border-zinc-200">
+              <CardHeader className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{member.name}</CardTitle>
+                  <Badge variant="secondary">
+                    {t(`status.${member.status}`)}
+                  </Badge>
+                </div>
+                <CardDescription>
+                  {member.organization} · {member.unit}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-sm text-zinc-600">
+                  {t("lastKnownLocation")}: {member.lastKnownLocation}
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/${locale}/regime-members/${member._id}`}>
+                    {t("viewProfile")}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
