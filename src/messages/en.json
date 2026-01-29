@@ -104,6 +104,7 @@
     "loading": "Loading actions...",
     "empty": "No actions yet.",
     "view": "View action",
+    "searchPlaceholder": "Search actions by type, location, or date",
     "types": {
       "killing": "Killing",
       "torture": "Torture",
@@ -198,6 +199,7 @@
     "subtitle": "Preserve records of victims with dignity, verification, and historical integrity.",
     "ctaReport": "Report a victim",
     "historyLink": "View history",
+    "searchPlaceholder": "Search by name, hometown, or location",
     "loading": "Loading records...",
     "empty": "No records yet.",
     "placeholderTitle": "Victim records coming soon",
