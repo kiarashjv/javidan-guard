@@ -37,6 +37,7 @@ export default function ActionsPage() {
   const actions = useQuery(api.actions.listCurrent, {});
   const createAction = useMutation(api.actions.create);
   const direction = locale === "fa" ? "rtl" : "ltr";
+  const actionRows = useMemo(() => (actions ?? []) as ActionRow[], [actions]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formState, setFormState] = useState({
@@ -313,7 +314,7 @@ export default function ActionsPage() {
         <div className="text-sm text-muted-foreground">{t("loading")}</div>
       ) : (
         <DataTable
-          data={actions as any[]}
+          data={actionRows}
           columns={[
             {
               key: "actionType",
@@ -360,3 +361,11 @@ export default function ActionsPage() {
     </section>
   );
 }
+
+type ActionRow = {
+  _id: string;
+  actionType: string;
+  date: string;
+  location: string;
+  description: string;
+};

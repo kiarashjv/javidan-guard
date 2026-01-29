@@ -21,6 +21,7 @@ import {
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
+import { PendingUpdateCard } from "@/components/verification/PendingUpdateCard";
 
 export default function VictimDetailPage({
   params,
@@ -32,6 +33,10 @@ export default function VictimDetailPage({
   const t = useTranslations("victimDetail");
   const victim = useQuery(api.victims.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
+  const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
+    targetCollection: "victims",
+    targetId: id,
+  });
 
   const [formState, setFormState] = useState({
     name: "",
@@ -211,6 +216,31 @@ export default function VictimDetailPage({
               {isSubmitting ? t("propose.submitting") : t("propose.submit")}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="border border-zinc-200">
+        <CardHeader>
+          <CardTitle>{t("pending.title")}</CardTitle>
+          <CardDescription>{t("pending.subtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {pendingUpdates === undefined ? (
+            <div className="text-sm text-zinc-500">{t("pending.loading")}</div>
+          ) : pendingUpdates.length === 0 ? (
+            <div className="text-sm text-zinc-500">{t("pending.empty")}</div>
+          ) : (
+            pendingUpdates.map((update) => (
+              <PendingUpdateCard
+                key={update._id}
+                id={update._id}
+                targetLabel={t("pending.label")}
+                proposedChanges={update.proposedChanges}
+                currentVerifications={update.currentVerifications}
+                requiredVerifications={update.requiredVerifications}
+              />
+            ))
+          )}
         </CardContent>
       </Card>
     </section>

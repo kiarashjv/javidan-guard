@@ -136,6 +136,21 @@ export const api = {
       },
       boolean
     >("pendingUpdates:rejectUpdate"),
+    listForTarget: makeFunctionReference<
+      "query",
+      {
+        targetCollection: "regimeMembers" | "victims" | "actions";
+        targetId: string;
+      },
+      {
+        _id: string;
+        targetCollection: string;
+        targetId: string;
+        proposedChanges: string;
+        requiredVerifications: number;
+        currentVerifications: number;
+      }[]
+    >("pendingUpdates:listPendingForTarget"),
   },
   history: {
     regimeMembers: makeFunctionReference<

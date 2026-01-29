@@ -143,6 +143,13 @@
       "reason": "Reason for update",
       "submit": "Submit update",
       "submitting": "Submitting..."
+    },
+    "pending": {
+      "title": "Pending updates",
+      "subtitle": "Verify open updates for this action.",
+      "loading": "Loading updates...",
+      "empty": "No pending updates.",
+      "label": "Action update"
     }
   },
   "victimDetail": {
@@ -172,6 +179,13 @@
       "reason": "Reason for update",
       "submit": "Submit update",
       "submitting": "Submitting..."
+    },
+    "pending": {
+      "title": "Pending updates",
+      "subtitle": "Verify open updates for this victim.",
+      "loading": "Loading updates...",
+      "empty": "No pending updates.",
+      "label": "Victim update"
     }
   },
   "victims": {

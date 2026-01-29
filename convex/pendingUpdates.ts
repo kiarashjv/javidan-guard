@@ -35,6 +35,29 @@ export const listPending = query({
   },
 });
 
+export const listPendingForTarget = query({
+  args: {
+    targetCollection: v.union(
+      v.literal("regimeMembers"),
+      v.literal("victims"),
+      v.literal("actions")
+    ),
+    targetId: v.union(
+      v.id("regimeMembers"),
+      v.id("victims"),
+      v.id("actions")
+    ),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db
+      .query("pendingUpdates")
+      .filter((q) => q.eq(q.field("targetCollection"), args.targetCollection))
+      .filter((q) => q.eq(q.field("targetId"), args.targetId))
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+  },
+});
+
 export const proposeUpdate = mutation({
   args: {
     targetCollection: v.union(

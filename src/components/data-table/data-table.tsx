@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
 import {
   Table,
   TableBody,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -23,7 +21,7 @@ import {
 import { SearchIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 interface Column<T> {
-  key: string;
+  key: keyof T & string;
   label: string;
   render?: (item: T) => React.ReactNode;
   sortable?: boolean;
@@ -39,7 +37,7 @@ interface DataTableProps<T> {
   statusOptions?: { value: string; label: string }[];
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
   searchPlaceholder = "Search...",
@@ -48,11 +46,10 @@ export function DataTable<T extends Record<string, any>>({
   showStatusFilter = false,
   statusOptions = [],
 }: DataTableProps<T>) {
-  const t = useTranslations();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [sortKey, setSortKey] = React.useState<string | null>(null);
+  const [sortKey, setSortKey] = React.useState<(keyof T & string) | null>(null);
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("asc");
 
   // Filter data based on search and status
@@ -72,7 +69,9 @@ export function DataTable<T extends Record<string, any>>({
 
     // Apply status filter
     if (showStatusFilter && statusFilter !== "all") {
-      filtered = filtered.filter((item) => item.status === statusFilter);
+      filtered = filtered.filter(
+        (item) => (item as Record<string, unknown>).status === statusFilter
+      );
     }
 
     // Apply sorting
@@ -80,8 +79,13 @@ export function DataTable<T extends Record<string, any>>({
       filtered = [...filtered].sort((a, b) => {
         const aVal = a[sortKey];
         const bVal = b[sortKey];
-        if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+        }
+        const aText = String(aVal ?? "");
+        const bText = String(bVal ?? "");
+        if (aText < bText) return sortDirection === "asc" ? -1 : 1;
+        if (aText > bText) return sortDirection === "asc" ? 1 : -1;
         return 0;
       });
     }
@@ -101,7 +105,7 @@ export function DataTable<T extends Record<string, any>>({
     setCurrentPage(1);
   }, [searchQuery, statusFilter]);
 
-  const handleSort = (key: string) => {
+  const handleSort = (key: keyof T & string) => {
     if (sortKey === key) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -183,15 +187,13 @@ export function DataTable<T extends Record<string, any>>({
             ) : (
               paginatedData.map((item, index) => (
                 <TableRow
-                  key={item._id || index}
+                  key={getRowKey(item, index)}
                   className={onRowClick ? "cursor-pointer" : ""}
                   onClick={() => onRowClick?.(item)}
                 >
                   {columns.map((column) => (
                     <TableCell key={column.key}>
-                      {column.render
-                        ? column.render(item)
-                        : item[column.key]?.toString() || "-"}
+                      {column.render ? column.render(item) : formatCellValue(item[column.key])}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -231,4 +233,19 @@ export function DataTable<T extends Record<string, any>>({
       )}
     </div>
   );
+}
+
+function formatCellValue(value: unknown) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+  return String(value);
+}
+
+function getRowKey<T extends Record<string, unknown>>(item: T, index: number) {
+  const possibleId = item._id;
+  if (typeof possibleId === "string") {
+    return possibleId;
+  }
+  return `row-${index}`;
 }
