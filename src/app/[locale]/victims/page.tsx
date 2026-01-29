@@ -4,8 +4,17 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,13 +26,6 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
@@ -35,7 +37,9 @@ export default function VictimsPage() {
   const t = useTranslations("victims");
   const victims = useQuery(api.victims.listCurrent, {});
   const createVictim = useMutation(api.victims.create);
+  const direction = locale === "fa" ? "rtl" : "ltr";
 
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [formState, setFormState] = useState({
     name: "",
     age: "",
@@ -120,24 +124,30 @@ export default function VictimsPage() {
       reason: "",
     });
     setIsSubmitting(false);
+    setDialogOpen(false);
   }
 
   return (
     <section className="space-y-8">
-      <div className="flex flex-col gap-4 text-start">
+      <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">{t("title")}</h1>
           <p className="text-base text-muted-foreground">{t("subtitle")}</p>
         </div>
-      </div>
 
-      <Card className="border border-zinc-200">
-        <CardHeader>
-          <CardTitle>{t("form.title")}</CardTitle>
-          <CardDescription>{t("form.subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg" className="w-full sm:w-auto">
+              <PlusIcon className="size-4" />
+              {t("form.title")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir={direction}>
+            <DialogHeader>
+              <DialogTitle>{t("form.title")}</DialogTitle>
+              <DialogDescription>{t("form.subtitle")}</DialogDescription>
+            </DialogHeader>
+            <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="victim-name">{t("form.name")}</Label>
@@ -315,12 +325,22 @@ export default function VictimsPage() {
                 }
               />
             </div>
-            <Button type="submit" disabled={!canSubmit || isSubmitting}>
-              {isSubmitting ? t("form.submitting") : t("form.submit")}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="flex gap-3">
+                <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                  {isSubmitting ? t("form.submitting") : t("form.submit")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {victims === undefined ? (
         <div className="text-sm text-muted-foreground">{t("loading")}</div>

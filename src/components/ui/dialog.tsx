@@ -48,15 +48,22 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  dir,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  dir?: 'ltr' | 'rtl'
 }) {
+  // Auto-detect direction from document if not provided
+  const direction = dir || (typeof document !== 'undefined' ? document.documentElement.dir : 'ltr') as 'ltr' | 'rtl'
+  const isRtl = direction === 'rtl'
+
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        dir={direction}
         className={cn(
           "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/5 grid max-w-[calc(100%-2rem)] gap-6 rounded-4xl p-6 text-sm ring-1 duration-100 sm:max-w-md fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2",
           className
@@ -66,9 +73,15 @@ function DialogContent({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button variant="ghost" className="absolute top-4 right-4" size="icon-sm">
-              <XIcon
-              />
+            <Button
+              variant="ghost"
+              className={cn(
+                "absolute top-4",
+                isRtl ? "left-4" : "right-4"
+              )}
+              size="icon-sm"
+            >
+              <XIcon />
               <span className="sr-only">Close</span>
             </Button>
           </DialogPrimitive.Close>

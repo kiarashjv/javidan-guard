@@ -31,7 +31,9 @@ export default function RegimeMembersPage() {
   const t = useTranslations("regimeMembers");
   const members = useQuery(api.regimeMembers.listCurrent, {});
   const createMember = useMutation(api.regimeMembers.create);
+  const direction = locale === "fa" ? "rtl" : "ltr";
 
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [formState, setFormState] = useState({
     name: "",
     organization: "",
@@ -98,24 +100,30 @@ export default function RegimeMembersPage() {
       reason: "",
     });
     setIsSubmitting(false);
+    setDialogOpen(false);
   }
 
   return (
     <section className="space-y-8">
-      <div className="flex flex-col gap-4 text-start">
+      <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">{t("title")}</h1>
           <p className="text-base text-muted-foreground">{t("subtitle")}</p>
         </div>
-      </div>
 
-      <Card className="border border-zinc-200">
-        <CardHeader>
-          <CardTitle>{t("form.title")}</CardTitle>
-          <CardDescription>{t("form.subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg" className="w-full sm:w-auto">
+              <PlusIcon className="size-4" />
+              {t("form.title")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir={direction}>
+            <DialogHeader>
+              <DialogTitle>{t("form.title")}</DialogTitle>
+              <DialogDescription>{t("form.subtitle")}</DialogDescription>
+            </DialogHeader>
+            <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="member-name">{t("form.name")}</Label>
@@ -247,12 +255,22 @@ export default function RegimeMembersPage() {
                 }
               />
             </div>
-            <Button type="submit" disabled={!canSubmit || isSubmitting}>
-              {isSubmitting ? t("form.submitting") : t("form.submit")}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="flex gap-3">
+                <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                  {isSubmitting ? t("form.submitting") : t("form.submit")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {members === undefined ? (
         <div className="text-sm text-muted-foreground">{t("loading")}</div>
