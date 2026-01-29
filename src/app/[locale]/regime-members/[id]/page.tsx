@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
+import { use } from "react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,11 +25,12 @@ import { serializeChanges } from "@/lib/pending-updates";
 export default function RegimeMemberDetailPage({
   params,
 }: {
-  params: { locale: string; id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const locale = useLocale();
   const t = useTranslations("regimeMember");
-  const member = useQuery(api.regimeMembers.getById, { id: params.id });
+  const member = useQuery(api.regimeMembers.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
 
   const [formState, setFormState] = useState({

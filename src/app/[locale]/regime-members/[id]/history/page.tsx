@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { use } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/convex-api";
 import { VersionTimeline } from "@/components/history/VersionTimeline";
@@ -10,11 +11,12 @@ import { VersionTimeline } from "@/components/history/VersionTimeline";
 export default function RegimeMemberHistoryPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const t = useTranslations("history");
   const locale = useLocale();
-  const history = useQuery(api.history.regimeMembers, { id: params.id });
+  const history = useQuery(api.history.regimeMembers, { id });
 
   if (history === undefined) {
     return <div className="text-sm text-zinc-500">{t("loading")}</div>;
@@ -48,7 +50,7 @@ export default function RegimeMemberHistoryPage({
           <p className="text-sm text-zinc-600">{t("subtitle")}</p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href={`/${locale}/regime-members/${params.id}`}>{t("back")}</Link>
+          <Link href={`/${locale}/regime-members/${id}`}>{t("back")}</Link>
         </Button>
       </div>
       <VersionTimeline items={timelineItems} />
