@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,10 +24,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 
 export default function ActionsPage() {
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("actions");
   const actions = useQuery(api.actions.listCurrent, {});
@@ -122,8 +125,8 @@ export default function ActionsPage() {
   return (
     <section className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold text-zinc-900">{t("title")}</h1>
-        <p className="text-base text-zinc-600">{t("subtitle")}</p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-base text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <Card className="border border-zinc-200">
@@ -285,38 +288,52 @@ export default function ActionsPage() {
       </Card>
 
       {actions === undefined ? (
-        <div className="text-sm text-zinc-500">{t("loading")}</div>
-      ) : actions.length === 0 ? (
-        <div className="text-sm text-zinc-500">{t("empty")}</div>
+        <div className="text-sm text-muted-foreground">{t("loading")}</div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {actions.map((action) => {
-            const typed = action as {
-              _id: string;
-              actionType: string;
-              location: string;
-              date: string;
-              description: string;
-            };
-
-            return (
-              <Card key={typed._id} className="border border-zinc-200">
-                <CardHeader>
-                  <CardTitle>{typed.actionType}</CardTitle>
-                  <CardDescription>
-                    {typed.location} · {typed.date}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-zinc-600">
-                  <div>{typed.description}</div>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/${locale}/actions/${typed._id}`}>{t("view")}</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <DataTable
+          data={actions as any[]}
+          columns={[
+            {
+              key: "actionType",
+              label: t("form.actionType"),
+              sortable: true,
+              render: (action) => (
+                <Badge variant="secondary">
+                  {t(`types.${action.actionType}`)}
+                </Badge>
+              ),
+            },
+            {
+              key: "date",
+              label: t("form.date"),
+              sortable: true,
+            },
+            {
+              key: "location",
+              label: t("form.location"),
+              sortable: true,
+            },
+            {
+              key: "description",
+              label: t("form.description"),
+              render: (action) => (
+                <div className="max-w-md truncate">
+                  {action.description}
+                </div>
+              ),
+            },
+          ]}
+          searchPlaceholder={t("searchPlaceholder")}
+          onRowClick={(action) => router.push(`/${locale}/actions/${action._id}`)}
+          showStatusFilter
+          statusOptions={[
+            { value: "killing", label: t("types.killing") },
+            { value: "torture", label: t("types.torture") },
+            { value: "arrest", label: t("types.arrest") },
+            { value: "assault", label: t("types.assault") },
+            { value: "other", label: t("types.other") },
+          ]}
+        />
       )}
     </section>
   );

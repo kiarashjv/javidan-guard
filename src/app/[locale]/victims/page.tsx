@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,12 +24,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import type { VictimStatus } from "@/types/records";
-import Link from "next/link";
 
 export default function VictimsPage() {
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("victims");
   const victims = useQuery(api.victims.listCurrent, {});
@@ -123,10 +126,9 @@ export default function VictimsPage() {
     <section className="space-y-8">
       <div className="flex flex-col gap-4 text-start">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-zinc-900">{t("title")}</h1>
-          <p className="text-base text-zinc-600">{t("subtitle")}</p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-base text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button className="w-fit">{t("ctaReport")}</Button>
       </div>
 
       <Card className="border border-zinc-200">
@@ -321,32 +323,58 @@ export default function VictimsPage() {
       </Card>
 
       {victims === undefined ? (
-        <div className="text-sm text-zinc-500">{t("loading")}</div>
-      ) : victims.length === 0 ? (
-        <div className="text-sm text-zinc-500">{t("empty")}</div>
+        <div className="text-sm text-muted-foreground">{t("loading")}</div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {victims.map((victim) => (
-            <Card key={victim._id} className="border border-zinc-200">
-              <CardHeader>
-                <CardTitle>{victim.name}</CardTitle>
-                <CardDescription>
-                  {victim.incidentLocation} · {victim.incidentDate}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-zinc-600">
-                {victim.circumstances}
-              </CardContent>
-              <CardContent>
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/${locale}/victims/${victim._id}/history`}>
-                    {t("historyLink")}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DataTable
+          data={victims}
+          columns={[
+            {
+              key: "name",
+              label: t("form.name"),
+              sortable: true,
+            },
+            {
+              key: "age",
+              label: t("form.age"),
+              sortable: true,
+              render: (victim) => victim.age || "-",
+            },
+            {
+              key: "hometown",
+              label: t("form.hometown"),
+              sortable: true,
+            },
+            {
+              key: "status",
+              label: t("form.status"),
+              sortable: true,
+              render: (victim) => (
+                <Badge variant="secondary">
+                  {t(`status.${victim.status}`)}
+                </Badge>
+              ),
+            },
+            {
+              key: "incidentDate",
+              label: t("form.incidentDate"),
+              sortable: true,
+            },
+            {
+              key: "incidentLocation",
+              label: t("form.incidentLocation"),
+            },
+          ]}
+          searchPlaceholder={t("searchPlaceholder")}
+          onRowClick={(victim) => router.push(`/${locale}/victims/${victim._id}`)}
+          showStatusFilter
+          statusOptions={[
+            { value: "murdered", label: t("status.murdered") },
+            { value: "captured", label: t("status.captured") },
+            { value: "vanished", label: t("status.vanished") },
+            { value: "released", label: t("status.released") },
+            { value: "confirmed_dead", label: t("status.confirmed_dead") },
+          ]}
+        />
       )}
     </section>
   );

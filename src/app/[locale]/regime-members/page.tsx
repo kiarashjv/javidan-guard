@@ -1,28 +1,32 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import type { RegimeMemberStatus } from "@/types/records";
 
 export default function RegimeMembersPage() {
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("regimeMembers");
   const members = useQuery(api.regimeMembers.listCurrent, {});
@@ -100,12 +104,8 @@ export default function RegimeMembersPage() {
     <section className="space-y-8">
       <div className="flex flex-col gap-4 text-start">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-zinc-900">{t("title")}</h1>
-          <p className="text-base text-zinc-600">{t("subtitle")}</p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Input placeholder={t("searchPlaceholder")} className="sm:max-w-sm" />
-          <Button>{t("ctaReport")}</Button>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-base text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
 
@@ -255,42 +255,52 @@ export default function RegimeMembersPage() {
       </Card>
 
       {members === undefined ? (
-        <div className="text-sm text-zinc-500">{t("loading")}</div>
-      ) : members.length === 0 ? (
-        <div className="text-sm text-zinc-500">{t("empty")}</div>
+        <div className="text-sm text-muted-foreground">{t("loading")}</div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {members.map((member) => (
-            <Card key={member._id} className="border border-zinc-200">
-              <CardHeader className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{member.name}</CardTitle>
-                  <Badge variant="secondary">
-                    {t(`status.${member.status}`)}
-                  </Badge>
-                </div>
-                <CardDescription>
-                  {member.organization} · {member.unit}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm text-zinc-600">
-                  {t("lastKnownLocation")}: {member.lastKnownLocation}
-                </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/${locale}/regime-members/${member._id}`}>
-                    {t("viewProfile")}
-                  </Link>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={`/${locale}/regime-members/${member._id}/history`}>
-                    {t("historyLink")}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DataTable
+          data={members}
+          columns={[
+            {
+              key: "name",
+              label: t("form.name"),
+              sortable: true,
+            },
+            {
+              key: "organization",
+              label: t("form.organization"),
+              sortable: true,
+            },
+            {
+              key: "position",
+              label: t("form.position"),
+              sortable: true,
+            },
+            {
+              key: "status",
+              label: t("form.status"),
+              sortable: true,
+              render: (member) => (
+                <Badge variant="secondary">
+                  {t(`status.${member.status}`)}
+                </Badge>
+              ),
+            },
+            {
+              key: "lastKnownLocation",
+              label: t("form.location"),
+            },
+          ]}
+          searchPlaceholder={t("searchPlaceholder")}
+          onRowClick={(member) => router.push(`/${locale}/regime-members/${member._id}`)}
+          showStatusFilter
+          statusOptions={[
+            { value: "active", label: t("status.active") },
+            { value: "arrested", label: t("status.arrested") },
+            { value: "fled", label: t("status.fled") },
+            { value: "deceased", label: t("status.deceased") },
+            { value: "unknown", label: t("status.unknown") },
+          ]}
+        />
       )}
     </section>
   );
