@@ -1,4 +1,5 @@
 const SESSION_KEY = "irp_session_id";
+const FINGERPRINT_KEY = "irp_fingerprint";
 
 function getStoredSessionId() {
   if (typeof window === "undefined") {
@@ -25,6 +26,22 @@ export function getSessionId() {
   const sessionId = crypto.randomUUID();
   storeSessionId(sessionId);
   return sessionId;
+}
+
+export function storeFingerprint(fingerprint: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(FINGERPRINT_KEY, fingerprint);
+}
+
+export function getStoredFingerprint() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(FINGERPRINT_KEY);
 }
 
 export function getClientMeta() {

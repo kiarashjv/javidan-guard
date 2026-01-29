@@ -149,4 +149,26 @@ export const api = {
       { current: Victim; history: Victim[] } | null
     >("history:getVictimHistory"),
   },
+  sessions: {
+    upsert: makeFunctionReference<
+      "mutation",
+      {
+        sessionId: string;
+        fingerprint: string;
+        ipHash: string;
+        userAgent: string;
+      },
+      string
+    >("sessions:upsertSession"),
+    canContribute: makeFunctionReference<
+      "query",
+      { sessionId: string },
+      { allowed: boolean; remaining: number }
+    >("sessions:canContribute"),
+    recordContribution: makeFunctionReference<
+      "mutation",
+      { sessionId: string },
+      boolean
+    >("sessions:recordContribution"),
+  },
 } as const;
