@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Geist, Geist_Mono, Vazirmatn } from "next/font/google";
+import { Geist, Geist_Mono, Vazirmatn, Crimson_Pro } from "next/font/google";
 import { defaultLocale, locales } from "@/i18n/config";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import "./globals.css";
@@ -19,6 +19,12 @@ const vazirmatn = Vazirmatn({
   variable: "--font-vazirmatn",
   subsets: ["arabic"],
 });
+
+const crimsonPro = Crimson_Pro({
+  variable: "--font-crimson-pro",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
 export const metadata: Metadata = {
   title: "Iran Revolution Accountability Platform",
   description:
@@ -33,13 +39,14 @@ export default async function RootLayout({
   const headerStore = await headers();
   const headerLocale = headerStore.get("x-next-intl-locale");
   const localeCandidate = headerLocale ?? defaultLocale;
-  const locale = locales.find((item) => item === localeCandidate) ?? defaultLocale;
+  const locale =
+    locales.find((item) => item === localeCandidate) ?? defaultLocale;
   const dir = locale === "fa" ? "rtl" : "ltr";
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${vazirmatn.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${vazirmatn.variable} ${crimsonPro.variable} antialiased`}
         dir={dir}
       >
         <ConvexClientProvider>{children}</ConvexClientProvider>

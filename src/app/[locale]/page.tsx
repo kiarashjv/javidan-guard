@@ -1,28 +1,60 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function HomePage() {
   const locale = useLocale();
   const t = useTranslations("home");
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-3">
-        <h1 className="text-3xl font-semibold leading-tight text-zinc-900">
+    <div className="flex flex-col gap-16">
+      {/* Modern Hero Section */}
+      <section className="flex flex-col items-center text-center gap-6 py-20">
+        <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+          Documentation & Verification
+        </div>
+        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
           {t("title")}
         </h1>
-        <p className="text-base leading-7 text-zinc-600">{t("subtitle")}</p>
-      </div>
-      <Card className="border border-zinc-200">
-        <CardContent className="flex flex-col gap-3 p-6 sm:flex-row">
-          <Button>{t("ctaPrimary")}</Button>
-          <Button asChild variant="outline">
+        <p className="max-w-175 text-lg text-muted-foreground sm:text-xl">
+          {t("subtitle")}
+        </p>
+        <div className="flex flex-col gap-2 min-[400px]:flex-row">
+          <Button size="lg">{t("ctaPrimary")}</Button>
+          <Button asChild variant="outline" size="lg">
             <Link href={`/${locale}/regime-members`}>{t("ctaSecondary")}</Link>
           </Button>
-        </CardContent>
-      </Card>
-    </section>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Regime Members</CardTitle>
+            <CardDescription>
+              Document and track regime officials and their actions
+            </CardDescription>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Victims</CardTitle>
+            <CardDescription>
+              Honor and remember those affected by the regime
+            </CardDescription>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Verified Records</CardTitle>
+            <CardDescription>
+              Community-verified documentation with full transparency
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </section>
+    </div>
   );
 }

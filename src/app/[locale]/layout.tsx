@@ -32,14 +32,15 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className="min-h-screen bg-zinc-50 text-zinc-950" dir={direction}>
-        <header className="border-b border-zinc-200 bg-white">
-          <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <div className="text-sm font-semibold tracking-wide">
-                Iran Revolution Accountability Platform
-              </div>
-              <nav className="flex flex-wrap gap-2">
+      <div className="min-h-screen bg-background" dir={direction}>
+        {/* Modern Clean Header */}
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+          <div className="container flex h-16 items-center justify-between px-4">
+            <div className="flex items-center gap-6">
+              <Link href={`/${locale}`} className="flex items-center space-x-2">
+                <span className="font-bold text-xl">Iran Revolution Platform</span>
+              </Link>
+              <nav className="hidden md:flex items-center gap-1">
                 <Button asChild variant="ghost" size="sm">
                   <Link href={`/${locale}/regime-members`}>{t("regimeMembers")}</Link>
                 </Button>
@@ -57,7 +58,24 @@ export default async function LocaleLayout({
             <LanguageSwitcher locale={locale} />
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
+
+        {/* Main Content */}
+        <main className="container px-4 py-8 md:py-12">{children}</main>
+
+        {/* Minimal Footer */}
+        <footer className="border-t">
+          <div className="container flex flex-col gap-4 py-10 md:flex-row md:justify-between">
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold">Iran Revolution Accountability Platform</p>
+              <p className="text-sm text-muted-foreground">
+                Documentation & Verification System
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} All rights reserved
+            </p>
+          </div>
+        </footer>
       </div>
     </NextIntlClientProvider>
   );
