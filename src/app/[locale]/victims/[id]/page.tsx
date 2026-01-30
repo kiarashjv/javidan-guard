@@ -411,6 +411,13 @@ export default function VictimDetailPage({
               </div>
             ) : null}
           </div>
+          <div>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/${locale}/victims/${victim._id}/history`}>
+                {t("historyLink")}
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

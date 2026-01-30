@@ -689,6 +689,7 @@ The platform is successful when:
 - Replace current tables with shadcn DataTable pattern (pagination, sorting, faceted filters).
 - Add filters for cities/locations and structured field options.
 - Improve column renderers and empty states.
+- **Note**: Current list views only fetch the first 20 rows; search/filter only works within that subset. Add server-side search and true pagination when scaling.
 
 ### Pending Updates UX
 - Inline “current vs proposed” under each field on detail pages.

@@ -426,6 +426,13 @@ export default function RegimeMemberDetailPage({
             ) : null}
           </div>
           <div>{t("notes")}</div>
+          <div>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/${locale}/regime-members/${member._id}/history`}>
+                {t("historyLink")}
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
