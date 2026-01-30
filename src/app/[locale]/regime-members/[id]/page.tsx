@@ -21,6 +21,7 @@ import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
+import { PendingUpdateCard } from "@/components/verification/PendingUpdateCard";
 
 export default function RegimeMemberDetailPage({
   params,
@@ -65,6 +66,29 @@ export default function RegimeMemberDetailPage({
   }, [pendingUpdates]);
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
+
+  const fieldLabels = {
+    name: membersT("form.name"),
+    organization: membersT("form.organization"),
+    unit: membersT("form.unit"),
+    position: membersT("form.position"),
+    rank: membersT("form.rank"),
+    status: membersT("form.status"),
+    lastKnownLocation: membersT("form.location"),
+    aliases: membersT("form.aliases"),
+    photoUrls: membersT("form.photos"),
+  } as const;
+
+  const formatValue = (key: string, value: string) => {
+    if (key === "status") {
+      try {
+        return membersT(`status.${value}`);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  };
 
   const [formState, setFormState] = useState({
     name: "",
@@ -372,6 +396,36 @@ export default function RegimeMemberDetailPage({
               {isSubmitting ? t("propose.submitting") : t("propose.submit")}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+      <Card className="border border-zinc-200">
+        <CardHeader>
+          <CardTitle>{pendingT("title")}</CardTitle>
+          <CardDescription>{pendingT("subtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {pendingUpdates === undefined ? (
+            <div className="text-sm text-zinc-500">{pendingT("loading")}</div>
+          ) : pendingUpdates.length === 0 ? (
+            <div className="text-sm text-zinc-500">{pendingT("empty")}</div>
+          ) : (
+            pendingUpdates.map((update) => (
+              <PendingUpdateCard
+                key={update._id}
+                id={update._id}
+                targetLabel={pendingT("labels.regimeMembers")}
+                proposedChanges={update.proposedChanges}
+                proposedAt={update.proposedAt}
+                expiresAt={update.expiresAt}
+                reason={update.reason}
+                targetSnapshot={update.targetSnapshot}
+                currentVerifications={update.currentVerifications}
+                requiredVerifications={update.requiredVerifications}
+                fieldLabels={fieldLabels}
+                formatValue={formatValue}
+              />
+            ))
+          )}
         </CardContent>
       </Card>
     </section>

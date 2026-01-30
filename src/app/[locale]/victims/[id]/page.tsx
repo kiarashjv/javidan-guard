@@ -67,6 +67,31 @@ export default function VictimDetailPage({
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
 
+  const fieldLabels = {
+    name: victimsT("form.name"),
+    hometown: victimsT("form.hometown"),
+    status: victimsT("form.status"),
+    incidentDate: victimsT("form.incidentDate"),
+    incidentLocation: victimsT("form.incidentLocation"),
+    circumstances: victimsT("form.circumstances"),
+    evidenceLinks: victimsT("form.evidenceLinks"),
+    newsReports: victimsT("form.newsReports"),
+    witnessAccounts: victimsT("form.witnessAccounts"),
+    linkedPerpetrators: victimsT("form.linkedPerpetrators"),
+    photoUrls: victimsT("form.photos"),
+  } as const;
+
+  const formatValue = (key: string, value: string) => {
+    if (key === "status") {
+      try {
+        return victimsT(`status.${value}`);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  };
+
   const currentValueLabel = (value: string | undefined) =>
     t("propose.currentValue", {
       value: value?.trim().length ? value : t("propose.currentValueEmpty"),
@@ -382,6 +407,8 @@ export default function VictimDetailPage({
                 targetSnapshot={update.targetSnapshot}
                 currentVerifications={update.currentVerifications}
                 requiredVerifications={update.requiredVerifications}
+                fieldLabels={fieldLabels}
+                formatValue={formatValue}
               />
             ))
           )}

@@ -322,7 +322,9 @@ export function DataTable<T extends Record<string, unknown>>({
               paginatedData.map((item, index) => (
                 <TableRow
                   key={getRowKey(item, index)}
-                  className={onRowClick ? "cursor-pointer" : ""}
+                  className={`odd:bg-muted/30 even:bg-transparent ${
+                    onRowClick ? "cursor-pointer hover:bg-muted/40" : ""
+                  }`}
                   onClick={() => onRowClick?.(item)}
                 >
                   {columns.map((column) => (

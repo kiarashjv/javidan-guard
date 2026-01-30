@@ -67,6 +67,30 @@ export default function ActionDetailPage({
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
 
+  const fieldLabels = {
+    actionType: actionsT("form.actionType"),
+    date: actionsT("form.date"),
+    location: actionsT("form.location"),
+    description: actionsT("form.description"),
+    perpetratorId: actionsT("form.perpetratorId"),
+    victimIds: actionsT("form.victimIds"),
+    evidenceUrls: actionsT("form.evidenceUrls"),
+    videoLinks: actionsT("form.videoLinks"),
+    documentLinks: actionsT("form.documentLinks"),
+    witnessStatements: actionsT("form.witnessStatements"),
+  } as const;
+
+  const formatValue = (key: string, value: string) => {
+    if (key === "actionType") {
+      try {
+        return actionsT(`types.${value}`);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  };
+
   const currentValueLabel = (value: string | undefined) =>
     t("propose.currentValue", {
       value: value?.trim().length ? value : t("propose.currentValueEmpty"),
@@ -331,6 +355,8 @@ export default function ActionDetailPage({
                 targetSnapshot={update.targetSnapshot}
                 currentVerifications={update.currentVerifications}
                 requiredVerifications={update.requiredVerifications}
+                fieldLabels={fieldLabels}
+                formatValue={formatValue}
               />
             ))
           )}

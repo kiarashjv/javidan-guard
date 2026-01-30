@@ -38,6 +38,8 @@ export type PendingUpdateCardProps = {
   reason?: string;
   targetSnapshot?: string | null;
   targetHref?: string;
+  fieldLabels?: Record<string, string>;
+  formatValue?: (key: string, value: string) => string;
 };
 
 export function PendingUpdateCard({
@@ -51,9 +53,12 @@ export function PendingUpdateCard({
   reason,
   targetSnapshot,
   targetHref,
+  fieldLabels,
+  formatValue,
 }: PendingUpdateCardProps) {
   const t = useTranslations("pendingUpdates");
   const locale = useLocale();
+  const isRtl = locale === "fa";
   const verify = useMutation(api.pendingUpdates.verify);
   const reject = useMutation(api.pendingUpdates.reject);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +133,7 @@ export function PendingUpdateCard({
 
   return (
     <Card className="border border-zinc-200">
-      <CardHeader className="space-y-2">
+      <CardHeader className="space-y-2 pb-3">
         <div className="flex items-center justify-between">
           <CardTitle>{targetLabel}</CardTitle>
           <Badge variant="secondary">
@@ -142,46 +147,66 @@ export function PendingUpdateCard({
         </CardDescription>
         <CardDescription>{t("proposedChanges")}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm">
+      <CardContent className="space-y-3 text-sm">
         {reason ? (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
             <div className="text-xs text-zinc-500">{t("reason")}</div>
             <div className="text-sm text-zinc-800">{reason}</div>
           </div>
         ) : null}
-        <div className="space-y-2">
-          {Object.entries(parsedChanges).map(([key, value]) => {
-            const currentValue = parsedSnapshot[key];
-            const currentText = currentValue ? String(currentValue) : t("unknown");
-            const proposedText = String(value);
-            const hasChanged = currentText !== proposedText;
-            return (
-              <div
-                key={key}
-                className="grid gap-2 rounded-lg border border-zinc-200 p-3"
-              >
-                <div className="text-xs font-medium text-zinc-500">
-                  {fieldLabel(key)}
-                </div>
-                <div className="grid gap-2 md:grid-cols-2">
-                  <div>
-                    <div className="text-xs text-zinc-500">{t("current")}</div>
-                    <div className="text-sm text-zinc-700">{currentText}</div>
+        <div className="overflow-hidden rounded-lg border border-zinc-200">
+          <div
+            className={`hidden grid-cols-3 gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600 md:grid ${
+              isRtl ? "text-right" : "text-left"
+            }`}
+          >
+            <div>{t("proposedChanges")}</div>
+            <div>{t("current")}</div>
+            <div>{t("proposed")}</div>
+          </div>
+          <div className="divide-y divide-zinc-200">
+            {Object.entries(parsedChanges).map(([key, value]) => {
+              const currentValue = parsedSnapshot[key];
+              const currentText = currentValue ? String(currentValue) : t("unknown");
+              const proposedText = String(value);
+              const hasChanged = currentText !== proposedText;
+              const label = fieldLabels?.[key] ?? fieldLabel(key);
+              const formattedCurrent = formatValue
+                ? formatValue(key, currentText)
+                : currentText;
+              const formattedProposed = formatValue
+                ? formatValue(key, proposedText)
+                : proposedText;
+              return (
+                <div
+                  key={key}
+                  className={`grid grid-cols-1 gap-2 px-3 py-2 text-xs md:grid-cols-3 ${
+                    isRtl ? "text-right" : "text-left"
+                  }`}
+                >
+                  <div className="font-medium text-zinc-600">{label}</div>
+                  <div className="text-zinc-700">
+                    <div className="text-[10px] text-zinc-500 md:hidden">{t("current")}</div>
+                    {formattedCurrent}
                   </div>
-                  <div>
-                    <div className="text-xs text-zinc-500">{t("proposed")}</div>
+                  <div
+                    className={`font-medium ${
+                      hasChanged ? "text-emerald-700" : "text-zinc-500"
+                    }`}
+                  >
                     <div
-                      className={`text-sm font-medium ${
-                        hasChanged ? "text-emerald-700" : "text-zinc-500"
+                      className={`text-[10px] font-normal md:hidden ${
+                        hasChanged ? "text-emerald-600" : "text-zinc-500"
                       }`}
                     >
-                      {proposedText}
+                      {t("proposed")}
                     </div>
+                    {formattedProposed}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={handleVerify} disabled={isSubmitting}>
