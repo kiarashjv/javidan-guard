@@ -14,6 +14,10 @@
     "actions": "Actions",
     "pending": "Pending updates"
   },
+  "common": {
+    "validationTitle": "Please review the form fields",
+    "validationDescription": "Some required fields are missing or invalid."
+  },
   "regimeMembers": {
     "title": "Regime members",
     "subtitle": "Document officials, units, and identities with evidence and verification.",

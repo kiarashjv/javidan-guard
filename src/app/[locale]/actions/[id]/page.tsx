@@ -25,9 +25,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/lib/convex-api";
+import { actionUpdateSchema } from "@/lib/client-validation";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ActionDetailPage({
   params,
@@ -39,8 +41,10 @@ export default function ActionDetailPage({
   const t = useTranslations("actionDetail");
   const actionsT = useTranslations("actions");
   const pendingT = useTranslations("pendingUpdates");
+  const common = useTranslations("common");
   const action = useQuery(api.actions.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
+  const { toast } = useToast();
   const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
     targetCollection: "actions",
     targetId: id,
@@ -121,6 +125,15 @@ export default function ActionDetailPage({
       return;
     }
 
+    const validation = actionUpdateSchema.safeParse(proposedChanges);
+    if (!validation.success) {
+      toast({
+        title: common("validationTitle"),
+        description: common("validationDescription"),
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
@@ -128,7 +141,7 @@ export default function ActionDetailPage({
     await proposeUpdate({
       targetCollection: "actions",
       targetId: (action as { _id: string })._id,
-      proposedChanges: serializeChanges(proposedChanges),
+      proposedChanges: serializeChanges(validation.data),
       reason: formState.reason.trim(),
       proposedBy: sessionId,
       ipHash: clientMeta.ipHash,

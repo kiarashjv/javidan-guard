@@ -1,10 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +18,30 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
+import {
+  regimeMemberCreateSchema,
+  regimeMemberFormSchema,
+} from "@/lib/client-validation";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import type { RegimeMemberStatus } from "@/types/records";
 
@@ -37,28 +57,25 @@ export default function RegimeMembersPage() {
   const direction = locale === "fa" ? "rtl" : "ltr";
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formState, setFormState] = useState({
-    name: "",
-    organization: "",
-    unit: "",
-    position: "",
-    rank: "",
-    status: "active" as RegimeMemberStatus,
-    lastKnownLocation: "",
-    aliases: "",
-    photoUrls: "",
-    reason: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const canSubmit = useMemo(() => {
-    return (
-      formState.name.trim().length > 1 &&
-      formState.organization.trim().length > 1 &&
-      formState.reason.trim().length > 3
-    );
-  }, [formState]);
+  const form = useForm<z.infer<typeof regimeMemberFormSchema>>({
+    resolver: zodResolver(regimeMemberFormSchema),
+    defaultValues: {
+      name: "",
+      organization: "",
+      unit: "",
+      position: "",
+      rank: "",
+      status: "active",
+      lastKnownLocation: "",
+      aliases: "",
+      photoUrls: "",
+      reason: "",
+    },
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
+  });
 
   async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
@@ -91,13 +108,11 @@ export default function RegimeMembersPage() {
       }
 
       if (uploadedUrls.length > 0) {
-        setFormState((prev) => {
-          const existing = prev.photoUrls.trim();
-          const combined = existing.length
-            ? `${existing}, ${uploadedUrls.join(", ")}`
-            : uploadedUrls.join(", ");
-          return { ...prev, photoUrls: combined };
-        });
+        const existing = form.getValues("photoUrls").trim();
+        const combined = existing.length
+          ? `${existing}, ${uploadedUrls.join(", ")}`
+          : uploadedUrls.join(", ");
+        form.setValue("photoUrls", combined, { shouldDirty: true });
       }
       event.target.value = "";
     } catch (error) {
@@ -108,51 +123,39 @@ export default function RegimeMembersPage() {
     }
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canSubmit) {
-      return;
-    }
-
-    setIsSubmitting(true);
+  async function handleSubmit(values: z.infer<typeof regimeMemberFormSchema>) {
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
 
-    await createMember({
-      name: formState.name.trim(),
-      aliases: formState.aliases
+    const payload = {
+      name: values.name.trim(),
+      aliases: values.aliases
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      photoUrls: formState.photoUrls
+      photoUrls: values.photoUrls
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      organization: formState.organization.trim(),
-      unit: formState.unit.trim(),
-      position: formState.position.trim(),
-      rank: formState.rank.trim(),
-      status: formState.status,
-      lastKnownLocation: formState.lastKnownLocation.trim(),
+      organization: values.organization.trim(),
+      unit: values.unit.trim(),
+      position: values.position.trim(),
+      rank: values.rank.trim(),
+      status: values.status as RegimeMemberStatus,
+      lastKnownLocation: values.lastKnownLocation.trim(),
       createdBySession: sessionId,
       ipHash: clientMeta.ipHash,
       userAgent: clientMeta.userAgent,
-      reason: formState.reason.trim(),
-    });
+      reason: values.reason.trim(),
+    };
 
-    setFormState({
-      name: "",
-      organization: "",
-      unit: "",
-      position: "",
-      rank: "",
-      status: "active",
-      lastKnownLocation: "",
-      aliases: "",
-      photoUrls: "",
-      reason: "",
-    });
-    setIsSubmitting(false);
+    const validation = regimeMemberCreateSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    await createMember(validation.data);
+    form.reset();
     setDialogOpen(false);
   }
 
@@ -176,165 +179,185 @@ export default function RegimeMembersPage() {
               <DialogTitle>{t("form.title")}</DialogTitle>
               <DialogDescription>{t("form.subtitle")}</DialogDescription>
             </DialogHeader>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="member-name">{t("form.name")}</Label>
-                <Input
-                  id="member-name"
-                  value={formState.name}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, name: event.target.value }))
-                  }
+            <Form {...form}>
+              <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.name")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="organization"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.organization")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.unit")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="position"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.position")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="rank"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.rank")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.status")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("form.statusPlaceholder")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">{t("status.active")}</SelectItem>
+                            <SelectItem value="arrested">{t("status.arrested")}</SelectItem>
+                            <SelectItem value="fled">{t("status.fled")}</SelectItem>
+                            <SelectItem value="deceased">{t("status.deceased")}</SelectItem>
+                            <SelectItem value="unknown">{t("status.unknown")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastKnownLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.location")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="aliases"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.aliases")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="photoUrls"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.photos")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="space-y-2 md:col-span-2">
+                    <Input
+                      id="member-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      disabled={isUploading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {isUploading ? t("form.uploading") : t("form.uploadPhotos")}
+                    </p>
+                    {uploadError ? (
+                      <p className="text-xs text-destructive">{uploadError}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <Separator />
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("form.reason")}</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="member-organization">{t("form.organization")}</Label>
-                <Input
-                  id="member-organization"
-                  value={formState.organization}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      organization: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="member-unit">{t("form.unit")}</Label>
-                <Input
-                  id="member-unit"
-                  value={formState.unit}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, unit: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="member-position">{t("form.position")}</Label>
-                <Input
-                  id="member-position"
-                  value={formState.position}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      position: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="member-rank">{t("form.rank")}</Label>
-                <Input
-                  id="member-rank"
-                  value={formState.rank}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, rank: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("form.status")}</Label>
-                <Select
-                  value={formState.status}
-                  onValueChange={(value) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      status: value as RegimeMemberStatus,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("form.statusPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">{t("status.active")}</SelectItem>
-                    <SelectItem value="arrested">{t("status.arrested")}</SelectItem>
-                    <SelectItem value="fled">{t("status.fled")}</SelectItem>
-                    <SelectItem value="deceased">{t("status.deceased")}</SelectItem>
-                    <SelectItem value="unknown">{t("status.unknown")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="member-location">{t("form.location")}</Label>
-                <Input
-                  id="member-location"
-                  value={formState.lastKnownLocation}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      lastKnownLocation: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="member-aliases">{t("form.aliases")}</Label>
-                <Input
-                  id="member-aliases"
-                  value={formState.aliases}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      aliases: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="member-photos">{t("form.photos")}</Label>
-                <Input
-                  id="member-photos"
-                  value={formState.photoUrls}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      photoUrls: event.target.value,
-                    }))
-                  }
-                />
-                <Input
-                  id="member-photo-upload"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotoUpload}
-                  disabled={isUploading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {isUploading ? t("form.uploading") : t("form.uploadPhotos")}
-                </p>
-                {uploadError ? (
-                  <p className="text-xs text-destructive">{uploadError}</p>
-                ) : null}
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <Label htmlFor="member-reason">{t("form.reason")}</Label>
-              <Textarea
-                id="member-reason"
-                value={formState.reason}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, reason: event.target.value }))
-                }
-              />
-            </div>
-              <div className="flex gap-3">
-                <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                  {isSubmitting ? t("form.submitting") : t("form.submit")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+                <div className="flex gap-3">
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? t("form.submitting") : t("form.submit")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      form.reset();
+                      setDialogOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>

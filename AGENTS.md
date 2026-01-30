@@ -3,6 +3,7 @@
 ## Engineering Principles
 - Follow OOP principles where appropriate; use composition over inheritance.
 - Keep a clear, consistent folder and file structure that matches the implementation plan.
+- Keep files focused and modular; avoid overloading single files with too much code while also avoiding over-engineering.
 - Prefer the latest stable package versions; avoid legacy patterns.
 - Never use TypeScript `any`.
 

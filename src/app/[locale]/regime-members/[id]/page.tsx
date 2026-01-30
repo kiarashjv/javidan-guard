@@ -26,9 +26,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/lib/convex-api";
+import { regimeMemberUpdateSchema } from "@/lib/client-validation";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegimeMemberDetailPage({
   params,
@@ -40,10 +42,12 @@ export default function RegimeMemberDetailPage({
   const t = useTranslations("regimeMember");
   const membersT = useTranslations("regimeMembers");
   const pendingT = useTranslations("pendingUpdates");
+  const common = useTranslations("common");
   const member = useQuery(api.regimeMembers.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const getUploadUrl = useMutation(api.files.getUrl);
+  const { toast } = useToast();
   const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
     targetCollection: "regimeMembers",
     targetId: id,
@@ -157,6 +161,15 @@ export default function RegimeMemberDetailPage({
       return;
     }
 
+    const validation = regimeMemberUpdateSchema.safeParse(proposedChanges);
+    if (!validation.success) {
+      toast({
+        title: common("validationTitle"),
+        description: common("validationDescription"),
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
@@ -164,7 +177,7 @@ export default function RegimeMemberDetailPage({
     await proposeUpdate({
       targetCollection: "regimeMembers",
       targetId: member._id,
-      proposedChanges: serializeChanges(proposedChanges),
+      proposedChanges: serializeChanges(validation.data),
       reason: formState.reason.trim(),
       proposedBy: sessionId,
       ipHash: clientMeta.ipHash,

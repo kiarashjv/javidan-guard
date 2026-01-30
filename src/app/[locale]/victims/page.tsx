@@ -1,10 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +18,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,6 +38,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
+import { victimCreateSchema, victimFormSchema } from "@/lib/client-validation";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import type { VictimStatus } from "@/types/records";
 
@@ -43,31 +54,29 @@ export default function VictimsPage() {
   const direction = locale === "fa" ? "rtl" : "ltr";
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formState, setFormState] = useState({
-    name: "",
-    age: "",
-    hometown: "",
-    status: "murdered" as VictimStatus,
-    incidentDate: "",
-    incidentLocation: "",
-    circumstances: "",
-    evidenceLinks: "",
-    newsReports: "",
-    witnessAccounts: "",
-    linkedPerpetrators: "",
-    photoUrls: "",
-    reason: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const canSubmit = useMemo(() => {
-    return (
-      formState.name.trim().length > 1 &&
-      formState.hometown.trim().length > 1 &&
-      formState.reason.trim().length > 3
-    );
-  }, [formState]);
+  type VictimFormValues = z.input<typeof victimFormSchema>;
+  const form = useForm<VictimFormValues>({
+    resolver: zodResolver(victimFormSchema),
+    defaultValues: {
+      name: "",
+      age: 0,
+      hometown: "",
+      status: "murdered",
+      incidentDate: "",
+      incidentLocation: "",
+      circumstances: "",
+      evidenceLinks: "",
+      newsReports: "",
+      witnessAccounts: "",
+      linkedPerpetrators: "",
+      photoUrls: "",
+      reason: "",
+    },
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
+  });
 
   async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
@@ -100,13 +109,11 @@ export default function VictimsPage() {
       }
 
       if (uploadedUrls.length > 0) {
-        setFormState((prev) => {
-          const existing = prev.photoUrls.trim();
-          const combined = existing.length
-            ? `${existing}, ${uploadedUrls.join(", ")}`
-            : uploadedUrls.join(", ");
-          return { ...prev, photoUrls: combined };
-        });
+        const existing = form.getValues("photoUrls").trim();
+        const combined = existing.length
+          ? `${existing}, ${uploadedUrls.join(", ")}`
+          : uploadedUrls.join(", ");
+        form.setValue("photoUrls", combined, { shouldDirty: true });
       }
       event.target.value = "";
     } catch (error) {
@@ -117,66 +124,52 @@ export default function VictimsPage() {
     }
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canSubmit) {
-      return;
-    }
-
-    setIsSubmitting(true);
+  async function handleSubmit(values: VictimFormValues) {
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
+    const parsed = victimFormSchema.parse(values);
 
-    await createVictim({
-      name: formState.name.trim(),
-      age: Number(formState.age || "0"),
-      photoUrls: formState.photoUrls
+    const payload = {
+      name: parsed.name.trim(),
+      age: parsed.age,
+      photoUrls: parsed.photoUrls
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      hometown: formState.hometown.trim(),
-      status: formState.status,
-      incidentDate: formState.incidentDate.trim(),
-      incidentLocation: formState.incidentLocation.trim(),
-      circumstances: formState.circumstances.trim(),
-      evidenceLinks: formState.evidenceLinks
+      hometown: parsed.hometown.trim(),
+      status: parsed.status as VictimStatus,
+      incidentDate: parsed.incidentDate.trim(),
+      incidentLocation: parsed.incidentLocation.trim(),
+      circumstances: parsed.circumstances.trim(),
+      evidenceLinks: parsed.evidenceLinks
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      newsReports: formState.newsReports
+      newsReports: parsed.newsReports
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      witnessAccounts: formState.witnessAccounts
+      witnessAccounts: parsed.witnessAccounts
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      linkedPerpetrators: formState.linkedPerpetrators
+      linkedPerpetrators: parsed.linkedPerpetrators
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
       createdBySession: sessionId,
       ipHash: clientMeta.ipHash,
       userAgent: clientMeta.userAgent,
-      reason: formState.reason.trim(),
-    });
+      reason: parsed.reason.trim(),
+    };
 
-    setFormState({
-      name: "",
-      age: "",
-      hometown: "",
-      status: "murdered",
-      incidentDate: "",
-      incidentLocation: "",
-      circumstances: "",
-      evidenceLinks: "",
-      newsReports: "",
-      witnessAccounts: "",
-      linkedPerpetrators: "",
-      photoUrls: "",
-      reason: "",
-    });
-    setIsSubmitting(false);
+    const validation = victimCreateSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    await createVictim(validation.data);
+    form.reset();
     setDialogOpen(false);
   }
 
@@ -200,211 +193,235 @@ export default function VictimsPage() {
               <DialogTitle>{t("form.title")}</DialogTitle>
               <DialogDescription>{t("form.subtitle")}</DialogDescription>
             </DialogHeader>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="victim-name">{t("form.name")}</Label>
-                <Input
-                  id="victim-name"
-                  value={formState.name}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, name: event.target.value }))
-                  }
+            <Form {...form}>
+              <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.name")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.age")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={
+                              typeof field.value === "number" || typeof field.value === "string"
+                                ? field.value
+                                : ""
+                            }
+                            onChange={(event) => field.onChange(event.target.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.status")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("form.statusPlaceholder")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="murdered">{t("status.murdered")}</SelectItem>
+                            <SelectItem value="captured">{t("status.captured")}</SelectItem>
+                            <SelectItem value="vanished">{t("status.vanished")}</SelectItem>
+                            <SelectItem value="released">{t("status.released")}</SelectItem>
+                            <SelectItem value="confirmed_dead">
+                              {t("status.confirmed_dead")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="incidentDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.incidentDate")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="circumstances"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.circumstances")}</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="evidenceLinks"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.evidenceLinks")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="newsReports"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.newsReports")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="witnessAccounts"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.witnessAccounts")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="linkedPerpetrators"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.linkedPerpetrators")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="hometown"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.hometown")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="incidentLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.incidentLocation")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="photoUrls"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.photos")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="space-y-2 md:col-span-2">
+                    <Input
+                      id="victim-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      disabled={isUploading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {isUploading ? t("form.uploading") : t("form.uploadPhotos")}
+                    </p>
+                    {uploadError ? (
+                      <p className="text-xs text-destructive">{uploadError}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <Separator />
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("form.reason")}</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="victim-age">{t("form.age")}</Label>
-                <Input
-                  id="victim-age"
-                  type="number"
-                  min="0"
-                  value={formState.age}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, age: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("form.status")}</Label>
-                <Select
-                  value={formState.status}
-                  onValueChange={(value) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      status: value as VictimStatus,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("form.statusPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="murdered">{t("status.murdered")}</SelectItem>
-                    <SelectItem value="captured">{t("status.captured")}</SelectItem>
-                    <SelectItem value="vanished">{t("status.vanished")}</SelectItem>
-                    <SelectItem value="released">{t("status.released")}</SelectItem>
-                    <SelectItem value="confirmed_dead">
-                      {t("status.confirmed_dead")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="victim-date">{t("form.incidentDate")}</Label>
-                <Input
-                  id="victim-date"
-                  value={formState.incidentDate}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      incidentDate: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="victim-circumstances">{t("form.circumstances")}</Label>
-                <Textarea
-                  id="victim-circumstances"
-                  value={formState.circumstances}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      circumstances: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="victim-evidence">{t("form.evidenceLinks")}</Label>
-                <Input
-                  id="victim-evidence"
-                  value={formState.evidenceLinks}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      evidenceLinks: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="victim-news">{t("form.newsReports")}</Label>
-                <Input
-                  id="victim-news"
-                  value={formState.newsReports}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      newsReports: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="victim-witness">{t("form.witnessAccounts")}</Label>
-                <Input
-                  id="victim-witness"
-                  value={formState.witnessAccounts}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      witnessAccounts: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="victim-linked">{t("form.linkedPerpetrators")}</Label>
-                <Input
-                  id="victim-linked"
-                  value={formState.linkedPerpetrators}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      linkedPerpetrators: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="victim-hometown">{t("form.hometown")}</Label>
-                <Input
-                  id="victim-hometown"
-                  value={formState.hometown}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      hometown: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="victim-location">{t("form.incidentLocation")}</Label>
-                <Input
-                  id="victim-location"
-                  value={formState.incidentLocation}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      incidentLocation: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="victim-photos">{t("form.photos")}</Label>
-                <Input
-                  id="victim-photos"
-                  value={formState.photoUrls}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      photoUrls: event.target.value,
-                    }))
-                  }
-                />
-                <Input
-                  id="victim-photo-upload"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotoUpload}
-                  disabled={isUploading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {isUploading ? t("form.uploading") : t("form.uploadPhotos")}
-                </p>
-                {uploadError ? (
-                  <p className="text-xs text-destructive">{uploadError}</p>
-                ) : null}
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <Label htmlFor="victim-reason">{t("form.reason")}</Label>
-              <Textarea
-                id="victim-reason"
-                value={formState.reason}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, reason: event.target.value }))
-                }
-              />
-            </div>
-              <div className="flex gap-3">
-                <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                  {isSubmitting ? t("form.submitting") : t("form.submit")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+                <div className="flex gap-3">
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? t("form.submitting") : t("form.submit")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      form.reset();
+                      setDialogOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>

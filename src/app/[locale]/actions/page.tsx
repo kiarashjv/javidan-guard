@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +18,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,6 +38,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
+import { actionCreateSchema, actionFormSchema } from "@/lib/client-validation";
 import { getClientMeta, getSessionId } from "@/lib/session";
 
 export default function ActionsPage() {
@@ -43,31 +54,26 @@ export default function ActionsPage() {
   const actionRows = useMemo(() => (actions ?? []) as ActionRow[], [actions]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formState, setFormState] = useState({
-    actionType: "killing",
-    date: "",
-    location: "",
-    description: "",
-    perpetratorId: "",
-    victimIds: "",
-    evidenceUrls: "",
-    videoLinks: "",
-    documentLinks: "",
-    witnessStatements: "",
-    reason: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const canSubmit = useMemo(() => {
-    return (
-      formState.actionType.length > 0 &&
-      formState.date.trim().length > 0 &&
-      formState.location.trim().length > 0 &&
-      formState.description.trim().length > 5 &&
-      formState.reason.trim().length > 3
-    );
-  }, [formState]);
+  const form = useForm<z.infer<typeof actionFormSchema>>({
+    resolver: zodResolver(actionFormSchema),
+    defaultValues: {
+      actionType: "killing",
+      date: "",
+      location: "",
+      description: "",
+      perpetratorId: "",
+      victimIds: "",
+      evidenceUrls: "",
+      videoLinks: "",
+      documentLinks: "",
+      witnessStatements: "",
+      reason: "",
+    },
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
+  });
 
   async function handleEvidenceUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
@@ -100,13 +106,11 @@ export default function ActionsPage() {
       }
 
       if (uploadedUrls.length > 0) {
-        setFormState((prev) => {
-          const existing = prev.evidenceUrls.trim();
-          const combined = existing.length
-            ? `${existing}, ${uploadedUrls.join(", ")}`
-            : uploadedUrls.join(", ");
-          return { ...prev, evidenceUrls: combined };
-        });
+        const existing = form.getValues("evidenceUrls").trim();
+        const combined = existing.length
+          ? `${existing}, ${uploadedUrls.join(", ")}`
+          : uploadedUrls.join(", ");
+        form.setValue("evidenceUrls", combined, { shouldDirty: true });
       }
       event.target.value = "";
     } catch (error) {
@@ -117,67 +121,54 @@ export default function ActionsPage() {
     }
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canSubmit) {
-      return;
-    }
-
-    setIsSubmitting(true);
+  async function handleSubmit(values: z.infer<typeof actionFormSchema>) {
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
 
-    await createAction({
-      actionType: formState.actionType as
+    const payload = {
+      actionType: values.actionType as
         | "killing"
         | "torture"
         | "arrest"
         | "assault"
         | "other",
-      date: formState.date.trim(),
-      location: formState.location.trim(),
-      description: formState.description.trim(),
-      perpetratorId: formState.perpetratorId.trim(),
-      victimIds: formState.victimIds
+      date: values.date.trim(),
+      location: values.location.trim(),
+      description: values.description.trim(),
+      perpetratorId: values.perpetratorId.trim(),
+      victimIds: values.victimIds
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      evidenceUrls: formState.evidenceUrls
+      evidenceUrls: values.evidenceUrls
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      videoLinks: formState.videoLinks
+      videoLinks: values.videoLinks
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      documentLinks: formState.documentLinks
+      documentLinks: values.documentLinks
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      witnessStatements: formState.witnessStatements
+      witnessStatements: values.witnessStatements
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
       createdBySession: sessionId,
       ipHash: clientMeta.ipHash,
       userAgent: clientMeta.userAgent,
-      reason: formState.reason.trim(),
-    });
+      reason: values.reason.trim(),
+    };
 
-    setFormState({
-      actionType: "killing",
-      date: "",
-      location: "",
-      description: "",
-      perpetratorId: "",
-      victimIds: "",
-      evidenceUrls: "",
-      videoLinks: "",
-      documentLinks: "",
-      witnessStatements: "",
-      reason: "",
-    });
-    setIsSubmitting(false);
+    const validation = actionCreateSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    await createAction(validation.data);
+    form.reset();
     setDialogOpen(false);
   }
 
@@ -201,177 +192,197 @@ export default function ActionsPage() {
               <DialogTitle>{t("form.title")}</DialogTitle>
               <DialogDescription>{t("form.subtitle")}</DialogDescription>
             </DialogHeader>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>{t("form.actionType")}</Label>
-                <Select
-                  value={formState.actionType}
-                  onValueChange={(value) =>
-                    setFormState((prev) => ({ ...prev, actionType: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("form.actionTypePlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="killing">{t("types.killing")}</SelectItem>
-                    <SelectItem value="torture">{t("types.torture")}</SelectItem>
-                    <SelectItem value="arrest">{t("types.arrest")}</SelectItem>
-                    <SelectItem value="assault">{t("types.assault")}</SelectItem>
-                    <SelectItem value="other">{t("types.other")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="action-date">{t("form.date")}</Label>
-                <Input
-                  id="action-date"
-                  value={formState.date}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, date: event.target.value }))
-                  }
+            <Form {...form}>
+              <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="actionType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.actionType")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("form.actionTypePlaceholder")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="killing">{t("types.killing")}</SelectItem>
+                            <SelectItem value="torture">{t("types.torture")}</SelectItem>
+                            <SelectItem value="arrest">{t("types.arrest")}</SelectItem>
+                            <SelectItem value="assault">{t("types.assault")}</SelectItem>
+                            <SelectItem value="other">{t("types.other")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.date")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.location")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.description")}</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="perpetratorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.perpetratorId")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="victimIds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("form.victimIds")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="evidenceUrls"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.evidenceUrls")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="space-y-2 md:col-span-2">
+                    <Input
+                      id="action-evidence-upload"
+                      type="file"
+                      multiple
+                      onChange={handleEvidenceUpload}
+                      disabled={isUploading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {isUploading ? t("form.uploading") : t("form.uploadEvidence")}
+                    </p>
+                    {uploadError ? (
+                      <p className="text-xs text-destructive">{uploadError}</p>
+                    ) : null}
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="videoLinks"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.videoLinks")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="documentLinks"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.documentLinks")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="witnessStatements"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{t("form.witnessStatements")}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <Separator />
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("form.reason")}</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="action-location">{t("form.location")}</Label>
-                <Input
-                  id="action-location"
-                  value={formState.location}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, location: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="action-description">{t("form.description")}</Label>
-                <Textarea
-                  id="action-description"
-                  value={formState.description}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      description: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="action-perpetrator">{t("form.perpetratorId")}</Label>
-                <Input
-                  id="action-perpetrator"
-                  value={formState.perpetratorId}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      perpetratorId: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="action-victims">{t("form.victimIds")}</Label>
-                <Input
-                  id="action-victims"
-                  value={formState.victimIds}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      victimIds: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="action-evidence">{t("form.evidenceUrls")}</Label>
-                <Input
-                  id="action-evidence"
-                  value={formState.evidenceUrls}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      evidenceUrls: event.target.value,
-                    }))
-                  }
-                />
-                <Input
-                  id="action-evidence-upload"
-                  type="file"
-                  multiple
-                  onChange={handleEvidenceUpload}
-                  disabled={isUploading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {isUploading ? t("form.uploading") : t("form.uploadEvidence")}
-                </p>
-                {uploadError ? (
-                  <p className="text-xs text-destructive">{uploadError}</p>
-                ) : null}
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="action-videos">{t("form.videoLinks")}</Label>
-                <Input
-                  id="action-videos"
-                  value={formState.videoLinks}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      videoLinks: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="action-docs">{t("form.documentLinks")}</Label>
-                <Input
-                  id="action-docs"
-                  value={formState.documentLinks}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      documentLinks: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="action-witnesses">{t("form.witnessStatements")}</Label>
-                <Input
-                  id="action-witnesses"
-                  value={formState.witnessStatements}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      witnessStatements: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <Label htmlFor="action-reason">{t("form.reason")}</Label>
-              <Textarea
-                id="action-reason"
-                value={formState.reason}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, reason: event.target.value }))
-                }
-              />
-            </div>
-              <div className="flex gap-3">
-                <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                  {isSubmitting ? t("form.submitting") : t("form.submit")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+                <div className="flex gap-3">
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? t("form.submitting") : t("form.submit")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      form.reset();
+                      setDialogOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>

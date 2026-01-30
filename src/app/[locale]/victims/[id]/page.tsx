@@ -26,9 +26,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/lib/convex-api";
+import { victimUpdateSchema } from "@/lib/client-validation";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
+import { useToast } from "@/hooks/use-toast";
 
 export default function VictimDetailPage({
   params,
@@ -40,10 +42,12 @@ export default function VictimDetailPage({
   const t = useTranslations("victimDetail");
   const victimsT = useTranslations("victims");
   const pendingT = useTranslations("pendingUpdates");
+  const common = useTranslations("common");
   const victim = useQuery(api.victims.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const getUploadUrl = useMutation(api.files.getUrl);
+  const { toast } = useToast();
   const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
     targetCollection: "victims",
     targetId: id,
@@ -160,6 +164,15 @@ export default function VictimDetailPage({
       return;
     }
 
+    const validation = victimUpdateSchema.safeParse(proposedChanges);
+    if (!validation.success) {
+      toast({
+        title: common("validationTitle"),
+        description: common("validationDescription"),
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
@@ -167,7 +180,7 @@ export default function VictimDetailPage({
     await proposeUpdate({
       targetCollection: "victims",
       targetId: victim._id,
-      proposedChanges: serializeChanges(proposedChanges),
+      proposedChanges: serializeChanges(validation.data),
       reason: formState.reason.trim(),
       proposedBy: sessionId,
       ipHash: clientMeta.ipHash,
