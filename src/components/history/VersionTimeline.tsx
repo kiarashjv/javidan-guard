@@ -16,6 +16,12 @@ type TimelineMeta = {
   value: string;
 };
 
+type TimelineChange = {
+  label: string;
+  before: string;
+  after: string;
+};
+
 type TimelineItem = {
   id: string;
   label: string;
@@ -24,6 +30,7 @@ type TimelineItem = {
   isCurrent?: boolean;
   meta?: TimelineMeta[];
   details?: string;
+  changes?: TimelineChange[];
 };
 
 export function VersionTimeline({ items }: { items: TimelineItem[] }) {
@@ -83,6 +90,43 @@ export function VersionTimeline({ items }: { items: TimelineItem[] }) {
               {item.details ? (
                 <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
                   {item.details}
+                </div>
+              ) : null}
+              {item.changes && item.changes.length > 0 ? (
+                <div className="space-y-2 rounded-lg border border-zinc-200 bg-white p-3">
+                  <div className="text-xs font-medium text-zinc-500">
+                    {t("changesTitle")}
+                  </div>
+                  <div className="space-y-2">
+                    {item.changes.map((change) => (
+                      <div
+                        key={`${item.id}-${change.label}`}
+                        className="rounded-md border border-zinc-100 p-2"
+                      >
+                        <div className="text-xs text-zinc-500">
+                          {change.label}
+                        </div>
+                        <div className="mt-1 grid gap-2 sm:grid-cols-2">
+                          <div>
+                            <div className="text-[11px] text-zinc-400">
+                              {t("beforeLabel")}
+                            </div>
+                            <div className="text-sm text-zinc-700">
+                              {change.before || "—"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[11px] text-zinc-400">
+                              {t("afterLabel")}
+                            </div>
+                            <div className="text-sm font-medium text-zinc-900">
+                              {change.after || "—"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </CardContent>

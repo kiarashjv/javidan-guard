@@ -274,7 +274,10 @@
     "empty": "تاریخی یافت نشد.",
     "back": "بازگشت",
     "currentLabel": "فعلی",
-    "archivedLabel": "بایگانی‌شده"
+    "archivedLabel": "بایگانی‌شده",
+    "changesTitle": "تغییرات",
+    "beforeLabel": "قبل",
+    "afterLabel": "بعد"
   },
   "updates": {
     "title": "به‌روزرسانی‌های زنده",

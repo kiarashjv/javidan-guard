@@ -274,7 +274,10 @@
     "empty": "No history found.",
     "back": "Back",
     "currentLabel": "Current",
-    "archivedLabel": "Archived"
+    "archivedLabel": "Archived",
+    "changesTitle": "Changes",
+    "beforeLabel": "Before",
+    "afterLabel": "After"
   },
   "updates": {
     "title": "Live updates",
