@@ -20,7 +20,6 @@ import {
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
-import { PendingUpdateCard } from "@/components/verification/PendingUpdateCard";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
 
 export default function ActionDetailPage({
@@ -67,29 +66,6 @@ export default function ActionDetailPage({
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
 
-  const fieldLabels = {
-    actionType: actionsT("form.actionType"),
-    date: actionsT("form.date"),
-    location: actionsT("form.location"),
-    description: actionsT("form.description"),
-    perpetratorId: actionsT("form.perpetratorId"),
-    victimIds: actionsT("form.victimIds"),
-    evidenceUrls: actionsT("form.evidenceUrls"),
-    videoLinks: actionsT("form.videoLinks"),
-    documentLinks: actionsT("form.documentLinks"),
-    witnessStatements: actionsT("form.witnessStatements"),
-  } as const;
-
-  const formatValue = (key: string, value: string) => {
-    if (key === "actionType") {
-      try {
-        return actionsT(`types.${value}`);
-      } catch {
-        return value;
-      }
-    }
-    return value;
-  };
 
   const currentValueLabel = (value: string | undefined) =>
     t("propose.currentValue", {
@@ -332,36 +308,6 @@ export default function ActionDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="border border-zinc-200">
-        <CardHeader>
-          <CardTitle>{t("pending.title")}</CardTitle>
-          <CardDescription>{t("pending.subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {pendingUpdates === undefined ? (
-            <div className="text-sm text-zinc-500">{t("pending.loading")}</div>
-          ) : pendingUpdates.length === 0 ? (
-            <div className="text-sm text-zinc-500">{t("pending.empty")}</div>
-          ) : (
-            pendingUpdates.map((update) => (
-              <PendingUpdateCard
-                key={update._id}
-                id={update._id}
-                targetLabel={t("pending.label")}
-                proposedChanges={update.proposedChanges}
-                proposedAt={update.proposedAt}
-                expiresAt={update.expiresAt}
-                reason={update.reason}
-                targetSnapshot={update.targetSnapshot}
-                currentVerifications={update.currentVerifications}
-                requiredVerifications={update.requiredVerifications}
-                fieldLabels={fieldLabels}
-                formatValue={formatValue}
-              />
-            ))
-          )}
-        </CardContent>
-      </Card>
     </section>
   );
 }
