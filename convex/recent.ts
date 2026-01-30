@@ -48,7 +48,7 @@ export const feed = query({
         type: "actions" as const,
         title: item.actionType,
         subtitle: `${item.location} · ${item.date}`,
-        status: item.actionType,
+        status: null,
         createdAt: item.createdAt,
       })),
     ];

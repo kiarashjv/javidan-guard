@@ -490,6 +490,8 @@ iran-revolution-platform/
 4. Security audit
 5. Deployment to Vercel + Convex
 6. Documentation (Farsi & English)
+7. Live marquee banner for recent names/news (RTL/LTR, accessible, pausable)
+8. Sidebar metrics: online users, contribution counts, and other community stats
 
 ## Critical Files to Create
 
