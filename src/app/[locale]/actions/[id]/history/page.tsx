@@ -15,6 +15,7 @@ export default function ActionHistoryPage({
 }) {
   const { id } = use(params);
   const t = useTranslations("history");
+  const actionsT = useTranslations("actions");
   const locale = useLocale();
   const history = useQuery(api.history.actions, { id });
 
@@ -29,16 +30,26 @@ export default function ActionHistoryPage({
   const timelineItems = [
     {
       id: history.current._id,
-      label: history.current.actionType,
+      label: actionsT(`types.${history.current.actionType}`),
       description: history.current.location,
       timestamp: history.current.createdAt,
       isCurrent: true,
+      meta: [
+        { label: actionsT("form.date"), value: history.current.date },
+        { label: actionsT("form.location"), value: history.current.location },
+      ],
+      details: history.current.description,
     },
     ...history.history.map((item) => ({
       id: item._id,
-      label: item.actionType,
+      label: actionsT(`types.${item.actionType}`),
       description: item.location,
       timestamp: item.createdAt,
+      meta: [
+        { label: actionsT("form.date"), value: item.date },
+        { label: actionsT("form.location"), value: item.location },
+      ],
+      details: item.description,
     })),
   ];
 

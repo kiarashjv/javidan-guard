@@ -15,6 +15,7 @@ export default function VictimHistoryPage({
 }) {
   const { id } = use(params);
   const t = useTranslations("history");
+  const victimsT = useTranslations("victims");
   const locale = useLocale();
   const history = useQuery(api.history.victims, { id });
 
@@ -33,12 +34,22 @@ export default function VictimHistoryPage({
       description: history.current.incidentLocation,
       timestamp: history.current.createdAt,
       isCurrent: true,
+      meta: [
+        { label: victimsT("form.status"), value: victimsT(`status.${history.current.status}`) },
+        { label: victimsT("form.incidentDate"), value: history.current.incidentDate },
+      ],
+      details: history.current.circumstances,
     },
     ...history.history.map((item) => ({
       id: item._id,
       label: item.name,
       description: item.incidentLocation,
       timestamp: item.createdAt,
+      meta: [
+        { label: victimsT("form.status"), value: victimsT(`status.${item.status}`) },
+        { label: victimsT("form.incidentDate"), value: item.incidentDate },
+      ],
+      details: item.circumstances,
     })),
   ];
 

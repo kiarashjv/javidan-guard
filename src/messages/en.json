@@ -243,7 +243,9 @@
     "subtitle": "Past versions and audit trail.",
     "loading": "Loading history...",
     "empty": "No history found.",
-    "back": "Back"
+    "back": "Back",
+    "currentLabel": "Current",
+    "archivedLabel": "Archived"
   },
   "updates": {
     "title": "Live updates",

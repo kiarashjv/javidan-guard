@@ -30,6 +30,7 @@ export default function RegimeMemberDetailPage({
   const { id } = use(params);
   const locale = useLocale();
   const t = useTranslations("regimeMember");
+  const membersT = useTranslations("regimeMembers");
   const member = useQuery(api.regimeMembers.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
 
@@ -110,7 +111,9 @@ export default function RegimeMemberDetailPage({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{member.name}</CardTitle>
-            <Badge variant="secondary">{t(`status.${member.status}`)}</Badge>
+            <Badge variant="secondary">
+              {membersT(`status.${member.status}`)}
+            </Badge>
           </div>
           <CardDescription>
             {member.organization} · {member.unit}
