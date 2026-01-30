@@ -9,6 +9,7 @@ import { v, type GenericId } from "convex/values";
 import { logAudit } from "./lib/audit";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore } from "./lib/trustScore";
+import { actionCreateSchema } from "./lib/validation";
 
 type DataModel = GenericDataModel;
 type QueryCtx = GenericQueryCtx<DataModel>;
@@ -90,20 +91,25 @@ export const create = mutationGeneric({
   ) => {
     await checkAndRecordContribution(ctx, args.createdBySession);
     const now = Date.now();
-
-    const id = await ctx.db.insert("actions", {
+    const parsed = actionCreateSchema.parse({
+      ...args,
       perpetratorId: args.perpetratorId,
       victimIds: args.victimIds,
-      date: args.date,
-      location: args.location,
-      description: args.description,
-      actionType: args.actionType,
-      evidenceUrls: args.evidenceUrls,
-      videoLinks: args.videoLinks,
-      documentLinks: args.documentLinks,
-      witnessStatements: args.witnessStatements,
+    });
+
+    const id = await ctx.db.insert("actions", {
+      perpetratorId: parsed.perpetratorId,
+      victimIds: parsed.victimIds,
+      date: parsed.date,
+      location: parsed.location,
+      description: parsed.description,
+      actionType: parsed.actionType,
+      evidenceUrls: parsed.evidenceUrls,
+      videoLinks: parsed.videoLinks,
+      documentLinks: parsed.documentLinks,
+      witnessStatements: parsed.witnessStatements,
       createdAt: now,
-      createdBySession: args.createdBySession,
+      createdBySession: parsed.createdBySession,
       currentVersion: true,
       supersededBy: null,
       verificationCount: 0,
@@ -115,17 +121,17 @@ export const create = mutationGeneric({
       collection: "actions",
       documentId: id,
       changes: JSON.stringify({
-        actionType: args.actionType,
-        date: args.date,
-        location: args.location,
+        actionType: parsed.actionType,
+        date: parsed.date,
+        location: parsed.location,
       }),
-      sessionId: args.createdBySession,
-      ipHash: args.ipHash,
-      userAgent: args.userAgent,
-      reason: args.reason,
+      sessionId: parsed.createdBySession,
+      ipHash: parsed.ipHash,
+      userAgent: parsed.userAgent,
+      reason: parsed.reason,
     });
 
-    await adjustTrustScore(ctx, args.createdBySession, 1);
+    await adjustTrustScore(ctx, parsed.createdBySession, 1);
 
     return id;
   },

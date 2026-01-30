@@ -19,13 +19,11 @@ export function Marquee({
   reverse = false,
   pauseOnHover = false,
   vertical = false,
-  repeat = 4,
   duration = "40s",
   gap = "1rem",
   children,
   ...props
 }: MarqueeProps) {
-
   return (
     <>
       {/* Inline CSS */}

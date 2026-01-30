@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { logAudit } from "./lib/audit";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore, recordVerification } from "./lib/trustScore";
+import { validatePendingUpdate } from "./lib/validation";
 
 const EXPIRES_IN_DAYS = 30;
 
@@ -17,7 +18,7 @@ export const listPending = query({
     targetCollection: v.union(
       v.literal("regimeMembers"),
       v.literal("victims"),
-      v.literal("actions")
+      v.literal("actions"),
     ),
   },
   handler: async (ctx, args) => {
@@ -35,13 +36,9 @@ export const listPendingForTarget = query({
     targetCollection: v.union(
       v.literal("regimeMembers"),
       v.literal("victims"),
-      v.literal("actions")
+      v.literal("actions"),
     ),
-    targetId: v.union(
-      v.id("regimeMembers"),
-      v.id("victims"),
-      v.id("actions")
-    ),
+    targetId: v.union(v.id("regimeMembers"), v.id("victims"), v.id("actions")),
   },
   handler: async (ctx, args) => {
     const pending = await ctx.db
@@ -59,13 +56,9 @@ export const proposeUpdate = mutation({
     targetCollection: v.union(
       v.literal("regimeMembers"),
       v.literal("victims"),
-      v.literal("actions")
+      v.literal("actions"),
     ),
-    targetId: v.union(
-      v.id("regimeMembers"),
-      v.id("victims"),
-      v.id("actions")
-    ),
+    targetId: v.union(v.id("regimeMembers"), v.id("victims"), v.id("actions")),
     proposedChanges: v.string(),
     reason: v.string(),
     proposedBy: v.string(),
@@ -81,7 +74,9 @@ export const proposeUpdate = mutation({
       .query("sessions")
       .filter((q) => q.eq(q.field("sessionId"), args.proposedBy))
       .first();
-    const requiredVerifications = proposer ? requiredVerificationsForTrust() : 3;
+    const requiredVerifications = proposer
+      ? requiredVerificationsForTrust()
+      : 3;
 
     if (!targetSnapshot) {
       throw new Error("Target record not found.");
@@ -89,12 +84,25 @@ export const proposeUpdate = mutation({
 
     let parsedChanges: Record<string, unknown>;
     try {
-      parsedChanges = JSON.parse(args.proposedChanges) as Record<string, unknown>;
+      parsedChanges = JSON.parse(args.proposedChanges) as Record<
+        string,
+        unknown
+      >;
     } catch {
       throw new Error("Invalid proposed changes.");
     }
 
-    const proposedKeys = new Set(Object.keys(parsedChanges));
+    let validatedChanges:
+      | ReturnType<typeof validatePendingUpdate>
+      | Record<string, unknown>;
+    if (args.targetCollection === "regimeMembers") {
+      validatedChanges = validatePendingUpdate("regimeMembers", parsedChanges);
+    } else if (args.targetCollection === "victims") {
+      validatedChanges = validatePendingUpdate("victims", parsedChanges);
+    } else {
+      validatedChanges = validatePendingUpdate("actions", parsedChanges);
+    }
+    const proposedKeys = new Set(Object.keys(validatedChanges));
     if (proposedKeys.size === 0) {
       throw new Error("No proposed changes provided.");
     }
@@ -109,14 +117,17 @@ export const proposeUpdate = mutation({
     for (const pending of existingPending) {
       let existingChanges: Record<string, unknown>;
       try {
-        existingChanges = JSON.parse(pending.proposedChanges) as Record<string, unknown>;
+        existingChanges = JSON.parse(pending.proposedChanges) as Record<
+          string,
+          unknown
+        >;
       } catch {
         continue;
       }
       for (const key of Object.keys(existingChanges)) {
         if (proposedKeys.has(key)) {
           throw new Error(
-            "A pending update already exists for one or more requested fields."
+            "A pending update already exists for one or more requested fields.",
           );
         }
       }
@@ -125,7 +136,7 @@ export const proposeUpdate = mutation({
     const id = await ctx.db.insert("pendingUpdates", {
       targetCollection: args.targetCollection,
       targetId: args.targetId,
-      proposedChanges: args.proposedChanges,
+      proposedChanges: JSON.stringify(validatedChanges),
       requiredVerifications,
       currentVerifications: 0,
       verifiedBySessions: [],
@@ -141,7 +152,7 @@ export const proposeUpdate = mutation({
       action: "update",
       collection: "pendingUpdates",
       documentId: id,
-      changes: args.proposedChanges,
+      changes: JSON.stringify(validatedChanges),
       sessionId: args.proposedBy,
       ipHash: args.ipHash,
       userAgent: args.userAgent,
@@ -177,7 +188,10 @@ export const verifyUpdate = mutation({
       throw new Error("Session has already verified this update.");
     }
 
-    const updatedSessions = [...pendingUpdate.verifiedBySessions, args.sessionId];
+    const updatedSessions = [
+      ...pendingUpdate.verifiedBySessions,
+      args.sessionId,
+    ];
     const updatedCount = pendingUpdate.currentVerifications + 1;
 
     await ctx.db.patch(args.pendingUpdateId, {
@@ -210,18 +224,26 @@ export const verifyUpdate = mutation({
 async function approveUpdate(
   ctx: MutationCtx,
   pendingUpdateId: Id<"pendingUpdates">,
-  pendingUpdate: Doc<"pendingUpdates">
+  pendingUpdate: Doc<"pendingUpdates">,
 ) {
   const target = await ctx.db.get(pendingUpdate.targetId);
   if (!target) {
     throw new Error("Target record not found for approval.");
   }
 
-  const proposed = JSON.parse(pendingUpdate.proposedChanges) as Record<string, unknown>;
+  const proposedRaw = JSON.parse(pendingUpdate.proposedChanges) as Record<
+    string,
+    unknown
+  >;
 
   if (pendingUpdate.targetCollection === "regimeMembers") {
+    const proposed = validatePendingUpdate("regimeMembers", proposedRaw);
     const typedTarget = target as Doc<"regimeMembers">;
-    const { _id: _unusedId, _creationTime: _unusedCreation, ...base } = typedTarget;
+    const {
+      _id: _unusedId,
+      _creationTime: _unusedCreation,
+      ...base
+    } = typedTarget;
     void _unusedId;
     void _unusedCreation;
     const newDocId = await ctx.db.insert("regimeMembers", {
@@ -236,13 +258,22 @@ async function approveUpdate(
       supersededBy: newDocId,
     });
   } else if (pendingUpdate.targetCollection === "victims") {
+    const proposed = validatePendingUpdate("victims", proposedRaw);
     const typedTarget = target as Doc<"victims">;
-    const { _id: _unusedId, _creationTime: _unusedCreation, ...base } = typedTarget;
+    const {
+      _id: _unusedId,
+      _creationTime: _unusedCreation,
+      ...base
+    } = typedTarget;
     void _unusedId;
     void _unusedCreation;
+    const resolvedLinkedPerpetrators = proposed.linkedPerpetrators
+      ? (proposed.linkedPerpetrators as Id<"regimeMembers">[])
+      : base.linkedPerpetrators;
     const newDocId = await ctx.db.insert("victims", {
       ...base,
       ...proposed,
+      linkedPerpetrators: resolvedLinkedPerpetrators,
       currentVersion: true,
       supersededBy: null,
       previousVersions: [...typedTarget.previousVersions, typedTarget._id],
@@ -252,13 +283,26 @@ async function approveUpdate(
       supersededBy: newDocId,
     });
   } else {
+    const proposed = validatePendingUpdate("actions", proposedRaw);
     const typedTarget = target as Doc<"actions">;
-    const { _id: _unusedId, _creationTime: _unusedCreation, ...base } = typedTarget;
+    const {
+      _id: _unusedId,
+      _creationTime: _unusedCreation,
+      ...base
+    } = typedTarget;
     void _unusedId;
     void _unusedCreation;
+    const resolvedPerpetratorId = proposed.perpetratorId
+      ? (proposed.perpetratorId as Id<"regimeMembers">)
+      : base.perpetratorId;
+    const resolvedVictimIds = proposed.victimIds
+      ? (proposed.victimIds as Id<"victims">[])
+      : base.victimIds;
     const newDocId = await ctx.db.insert("actions", {
       ...base,
       ...proposed,
+      perpetratorId: resolvedPerpetratorId,
+      victimIds: resolvedVictimIds,
       currentVersion: true,
       supersededBy: null,
       previousVersions: [...typedTarget.previousVersions, typedTarget._id],

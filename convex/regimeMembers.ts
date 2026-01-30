@@ -9,6 +9,7 @@ import { v, type GenericId } from "convex/values";
 import { logAudit } from "./lib/audit";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore } from "./lib/trustScore";
+import { regimeMemberCreateSchema } from "./lib/validation";
 
 type DataModel = GenericDataModel;
 type QueryCtx = GenericQueryCtx<DataModel>;
@@ -94,19 +95,20 @@ export const create = mutationGeneric({
   ) => {
     await checkAndRecordContribution(ctx, args.createdBySession);
     const now = Date.now();
+    const parsed = regimeMemberCreateSchema.parse(args);
 
     const id = await ctx.db.insert("regimeMembers", {
-      name: args.name,
-      aliases: args.aliases,
-      photoUrls: args.photoUrls,
-      organization: args.organization,
-      unit: args.unit,
-      position: args.position,
-      rank: args.rank,
-      status: args.status,
-      lastKnownLocation: args.lastKnownLocation,
+      name: parsed.name,
+      aliases: parsed.aliases,
+      photoUrls: parsed.photoUrls,
+      organization: parsed.organization,
+      unit: parsed.unit,
+      position: parsed.position,
+      rank: parsed.rank,
+      status: parsed.status,
+      lastKnownLocation: parsed.lastKnownLocation,
       createdAt: now,
-      createdBySession: args.createdBySession,
+      createdBySession: parsed.createdBySession,
       currentVersion: true,
       supersededBy: null,
       verificationCount: 0,
@@ -118,21 +120,21 @@ export const create = mutationGeneric({
       collection: "regimeMembers",
       documentId: id,
       changes: JSON.stringify({
-        name: args.name,
-        status: args.status,
-        organization: args.organization,
-        unit: args.unit,
-        position: args.position,
-        rank: args.rank,
-        lastKnownLocation: args.lastKnownLocation,
+        name: parsed.name,
+        status: parsed.status,
+        organization: parsed.organization,
+        unit: parsed.unit,
+        position: parsed.position,
+        rank: parsed.rank,
+        lastKnownLocation: parsed.lastKnownLocation,
       }),
-      sessionId: args.createdBySession,
-      ipHash: args.ipHash,
-      userAgent: args.userAgent,
-      reason: args.reason,
+      sessionId: parsed.createdBySession,
+      ipHash: parsed.ipHash,
+      userAgent: parsed.userAgent,
+      reason: parsed.reason,
     });
 
-    await adjustTrustScore(ctx, args.createdBySession, 1);
+    await adjustTrustScore(ctx, parsed.createdBySession, 1);
 
     return id;
   },
