@@ -94,6 +94,8 @@
     "proposedAt": "Proposed {date}",
     "expiresAt": "Expires {date}",
     "reason": "Reason",
+    "fieldPending": "Pending change",
+    "fieldLocked": "A pending change exists for this field. Reject it to propose a new one.",
     "filters": {
       "regimeMembers": "Regime members",
       "victims": "Victims",
@@ -157,6 +159,8 @@
       "date": "Date",
       "location": "Location",
       "description": "Description",
+      "currentValue": "Current: {value}",
+      "currentValueEmpty": "—",
       "reason": "Reason for update",
       "submit": "Submit update",
       "submitting": "Submitting..."
@@ -193,6 +197,8 @@
       "incidentDate": "Incident date",
       "incidentLocation": "Incident location",
       "circumstances": "Circumstances",
+      "currentValue": "Current: {value}",
+      "currentValueEmpty": "—",
       "reason": "Reason for update",
       "submit": "Submit update",
       "submitting": "Submitting..."
@@ -278,5 +284,20 @@
     "page": "Page {current} of {total}",
     "results": "Showing {from}-{to} of {total} results",
     "resultsFiltered": "Showing {from}-{to} of {filtered} results (filtered from {total} total)"
+  },
+  "footer": {
+    "about": "About",
+    "mission": "A public, verification-based archive documenting regime members and victims of the Iranian revolution. We preserve historical truth through community verification and evidence-based records.",
+    "quickLinks": "Quick links",
+    "support": "Support",
+    "donate": "Donate",
+    "contribute": "Contribute",
+    "legal": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms of service",
+    "contact": "Contact",
+    "email": "contact@gardejavidan.org",
+    "social": "Follow us",
+    "copyright": "© {year} Gard-e Javidan. All rights reserved."
   }
 }

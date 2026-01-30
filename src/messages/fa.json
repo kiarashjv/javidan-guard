@@ -94,6 +94,8 @@
     "proposedAt": "ثبت شده در {date}",
     "expiresAt": "انقضا در {date}",
     "reason": "دلیل",
+    "fieldPending": "تغییر در انتظار",
+    "fieldLocked": "برای این فیلد یک تغییر در انتظار است. برای ثبت جدید ابتدا آن را رد کنید.",
     "filters": {
       "regimeMembers": "اعضای رژیم",
       "victims": "جاویدنامان",
@@ -157,6 +159,8 @@
       "date": "تاریخ",
       "location": "محل",
       "description": "شرح",
+      "currentValue": "مقدار فعلی: {value}",
+      "currentValueEmpty": "—",
       "reason": "دلیل ویرایش",
       "submit": "ارسال ویرایش",
       "submitting": "در حال ارسال..."
@@ -193,6 +197,8 @@
       "incidentDate": "تاریخ حادثه",
       "incidentLocation": "محل حادثه",
       "circumstances": "شرح واقعه",
+      "currentValue": "مقدار فعلی: {value}",
+      "currentValueEmpty": "—",
       "reason": "دلیل ویرایش",
       "submit": "ارسال ویرایش",
       "submitting": "در حال ارسال..."
@@ -278,5 +284,20 @@
     "page": "صفحه {current} از {total}",
     "results": "نمایش {from}–{to} از {total} نتیجه",
     "resultsFiltered": "نمایش {from}–{to} از {filtered} نتیجه (از {total} نتیجه)"
+  },
+  "footer": {
+    "about": "درباره ما",
+    "mission": "آرشیو عمومی و مبتنی بر راستی‌آزمایی برای ثبت اعضای رژیم و جاویدنامان انقلاب ایران. ما حقیقت تاریخی را از طریق تایید جمعی و ثبت مبتنی بر شواهد حفظ می‌کنیم.",
+    "quickLinks": "دسترسی سریع",
+    "support": "حمایت",
+    "donate": "کمک مالی",
+    "contribute": "مشارکت",
+    "legal": "قوانین",
+    "privacy": "حریم خصوصی",
+    "terms": "شرایط استفاده",
+    "contact": "تماس",
+    "email": "contact@gardejavidan.org",
+    "social": "شبکه‌های اجتماعی",
+    "copyright": "© {year} گارد جاویدان. کلیه حقوق محفوظ است."
   }
 }
