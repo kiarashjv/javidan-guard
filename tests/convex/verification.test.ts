@@ -189,6 +189,7 @@ describe('Verification System', () => {
         currentVerifications: 0,
         requiredVerifications: 3, // Require 3 verifications
         verifiedBySessions: [],
+        rejectedBySessions: [],
         expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
         targetSnapshot: JSON.stringify({})
       });
