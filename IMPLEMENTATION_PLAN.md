@@ -672,6 +672,36 @@ The platform is successful when:
 14. Security audit and anonymity verification
 15. Production deployment with monitoring
 
+---
+
+## Backlog / Ideas to Revisit
+
+### UX & Navigation
+- Sidebar layout like news sites with an updates feed.
+- Refresh indicator (“updated X seconds ago”) and “New updates available” banner instead of auto-refresh.
+- Recent updates feed showing latest entities + verification status (no audit log exposure).
+
+### Tables & Search
+- Replace current tables with shadcn DataTable pattern (pagination, sorting, faceted filters).
+- Add filters for cities/locations and structured field options.
+- Improve column renderers and empty states.
+
+### Pending Updates UX
+- Inline “current vs proposed” under each field on detail pages.
+- History view as a collapsible/accordion panel.
+
+### Media & Evidence
+- Upload photos/videos to Convex storage instead of links.
+- Evidence previews and thumbnails.
+
+### Location
+- Map picker for incident and last-known locations.
+- Map display on detail pages (Google Maps/Mapbox).
+
+### Ops / Deployment
+- Deployment docs (Vercel + Convex).
+- Optional global/IP rate limiting beyond sessions.
+
 ## Platform Management
 
 **Via Convex Dashboard:**
