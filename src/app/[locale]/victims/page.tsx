@@ -15,7 +15,7 @@ export default function VictimsPage() {
   const locale = useLocale();
   const t = useTranslations("victims");
   const table = useTranslations("table");
-  const victims = useQuery(api.victims.listCurrent, {});
+  const victims = useQuery(api.victims.listCurrent, { limit: 20 });
   const direction = locale === "fa" ? "rtl" : "ltr";
 
   return (

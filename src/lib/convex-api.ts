@@ -3,7 +3,11 @@ import type { RegimeMember, Victim } from "@/types/records";
 
 export const api = {
   regimeMembers: {
-    listCurrent: makeFunctionReference<"query", Record<string, never>, RegimeMember[]>(
+    listCurrent: makeFunctionReference<
+      "query",
+      { limit?: number },
+      RegimeMember[]
+    >(
       "regimeMembers:listCurrent"
     ),
     getById: makeFunctionReference<
@@ -32,7 +36,11 @@ export const api = {
     >("regimeMembers:create"),
   },
   victims: {
-    listCurrent: makeFunctionReference<"query", Record<string, never>, Victim[]>(
+    listCurrent: makeFunctionReference<
+      "query",
+      { limit?: number },
+      Victim[]
+    >(
       "victims:listCurrent"
     ),
     getById: makeFunctionReference<"query", { id: string }, Victim | null>(
@@ -62,7 +70,11 @@ export const api = {
     >("victims:create"),
   },
   actions: {
-    listCurrent: makeFunctionReference<"query", Record<string, never>, unknown[]>(
+    listCurrent: makeFunctionReference<
+      "query",
+      { limit?: number },
+      unknown[]
+    >(
       "actions:listCurrent"
     ),
     getById: makeFunctionReference<"query", { id: string }, unknown | null>(

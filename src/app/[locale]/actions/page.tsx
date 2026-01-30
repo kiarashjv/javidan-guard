@@ -15,7 +15,7 @@ export default function ActionsPage() {
   const locale = useLocale();
   const t = useTranslations("actions");
   const table = useTranslations("table");
-  const actions = useQuery(api.actions.listCurrent, {});
+  const actions = useQuery(api.actions.listCurrent, { limit: 20 });
   const direction = locale === "fa" ? "rtl" : "ltr";
   const actionRows = (actions ?? []) as ActionRow[];
 

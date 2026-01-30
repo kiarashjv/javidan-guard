@@ -15,7 +15,7 @@ export default function RegimeMembersPage() {
   const locale = useLocale();
   const t = useTranslations("regimeMembers");
   const table = useTranslations("table");
-  const members = useQuery(api.regimeMembers.listCurrent, {});
+  const members = useQuery(api.regimeMembers.listCurrent, { limit: 20 });
   const direction = locale === "fa" ? "rtl" : "ltr";
 
   return (

@@ -16,12 +16,13 @@ type QueryCtx = GenericQueryCtx<DataModel>;
 type MutationCtx = GenericMutationCtx<DataModel>;
 
 export const listCurrent = queryGeneric({
-  args: {},
-  handler: async (ctx: QueryCtx) => {
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx: QueryCtx, args: { limit?: number }) => {
+    const limit = args.limit ?? 20;
     return ctx.db
       .query("regimeMembers")
       .filter((q) => q.eq(q.field("currentVersion"), true))
-      .collect();
+      .take(limit);
   },
 });
 

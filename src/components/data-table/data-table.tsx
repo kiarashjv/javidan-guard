@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SearchIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 
 interface Column<T> {
   key: keyof T & string;
@@ -33,7 +32,6 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   onRowClick?: (item: T) => void;
   pageSize?: number;
-  pageSizeOptions?: number[];
   showStatusFilter?: boolean;
   statusOptions?: { value: string; label: string }[];
   filters?: {
@@ -65,7 +63,6 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder = "Search...",
   onRowClick,
   pageSize = 20,
-  pageSizeOptions = [10, 20, 50],
   showStatusFilter = false,
   statusOptions = [],
   filters = [],
@@ -86,7 +83,6 @@ export function DataTable<T extends Record<string, unknown>>({
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
-  const [currentPage, setCurrentPage] = React.useState(1);
   const [sortKey, setSortKey] = React.useState<(keyof T & string) | null>(null);
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
     "asc",
@@ -94,7 +90,7 @@ export function DataTable<T extends Record<string, unknown>>({
   const [filterValues, setFilterValues] = React.useState<
     Record<string, string>
   >({});
-  const [pageSizeState, setPageSizeState] = React.useState(pageSize);
+  const pageSizeState = pageSize;
 
   // Filter data based on search and status
   const filteredData = React.useMemo(() => {
@@ -158,19 +154,13 @@ export function DataTable<T extends Record<string, unknown>>({
   ]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / pageSizeState);
   const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSizeState,
-    currentPage * pageSizeState,
+    0,
+    pageSizeState,
   );
   const rangeStart =
-    filteredData.length === 0 ? 0 : (currentPage - 1) * pageSizeState + 1;
-  const rangeEnd = Math.min(currentPage * pageSizeState, filteredData.length);
-
-  // Reset to page 1 when filters change
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, filterValues, pageSizeState]);
+    filteredData.length === 0 ? 0 : 1;
+  const rangeEnd = Math.min(pageSizeState, filteredData.length);
 
   const handleSort = (key: keyof T & string) => {
     if (sortKey === key) {
@@ -341,61 +331,7 @@ export function DataTable<T extends Record<string, unknown>>({
         </Table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            {labels.page(currentPage, totalPages)}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {labels.rowsPerPage}
-              </span>
-              <Select
-                value={String(pageSizeState)}
-                onValueChange={(value) => setPageSizeState(Number(value))}
-              >
-                <SelectTrigger
-                  className={`h-9 min-w-22 ${
-                    direction === "rtl" ? "text-right flex-row-reverse" : ""
-                  }`}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  dir={direction}
-                  className={direction === "rtl" ? "text-right" : ""}
-                >
-                  {pageSizeOptions.map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeftIcon className="size-4" />
-              {labels.previous}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              {labels.next}
-              <ChevronRightIcon className="size-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Pagination removed: fixed first page only */}
     </div>
   );
 }
