@@ -26,9 +26,12 @@ const crimsonPro = Crimson_Pro({
   weight: ["400", "600", "700"],
 });
 export const metadata: Metadata = {
-  title: "Iran Revolution Accountability Platform",
+  title: "Gard-e Javidan",
   description:
-    "Public platform for documenting regime members and victims with verification and audit logs.",
+    "Public accountability archive for documenting regime members and victims with verification and audit logs.",
+  icons: {
+    icon: "/JAVID_SHAH.png",
+  },
 };
 
 export default async function RootLayout({

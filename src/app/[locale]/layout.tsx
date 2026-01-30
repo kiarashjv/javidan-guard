@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
@@ -5,6 +6,7 @@ import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
+import { UpdatesSidebar } from "@/components/updates/UpdatesSidebar";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -37,12 +39,21 @@ export default async function LocaleLayout({
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
           <div className="mx-auto max-w-7xl w-full flex h-16 items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-6">
-              <Link href={`/${locale}`} className="flex items-center space-x-2">
-                <span className="font-bold text-xl">Iran Revolution Platform</span>
+              <Link href={`/${locale}`} className="flex items-center gap-3">
+                <Image
+                  src="/LION.png"
+                  alt={t("brandName")}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12"
+                />
+                <span className="font-bold text-xl">{t("brandName")}</span>
               </Link>
               <nav className="hidden md:flex items-center gap-1">
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/${locale}/regime-members`}>{t("regimeMembers")}</Link>
+                  <Link href={`/${locale}/regime-members`}>
+                    {t("regimeMembers")}
+                  </Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
                   <Link href={`/${locale}/victims`}>{t("victims")}</Link>
@@ -60,15 +71,24 @@ export default async function LocaleLayout({
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 md:px-6 md:py-12">{children}</main>
+        <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 md:px-6 md:py-12">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div>{children}</div>
+            <div className="hidden lg:block">
+              <div className="sticky top-20">
+                <UpdatesSidebar />
+              </div>
+            </div>
+          </div>
+        </main>
 
         {/* Minimal Footer */}
         <footer className="mt-auto border-t">
           <div className="mx-auto max-w-7xl w-full flex flex-col gap-4 py-10 px-4 md:px-6 md:flex-row md:justify-between">
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold">Iran Revolution Accountability Platform</p>
+              <p className="text-sm font-semibold">{t("brandName")}</p>
               <p className="text-sm text-muted-foreground">
-                Documentation & Verification System
+                {t("brandTagline")}
               </p>
             </div>
             <p className="text-sm text-muted-foreground">

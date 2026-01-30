@@ -1,7 +1,7 @@
-# Iran Revolution Accountability Platform - Implementation Plan
+# Gard-e Javidan - Implementation Plan
 
 ## Project Overview
-A public platform for documenting regime members and victims during the Iran revolution, with emphasis on data integrity, historical preservation, anonymity, and verification-based editing.
+A public platform for documenting Iranian regime members and victims, with emphasis on data integrity, historical preservation, anonymity, and verification-based editing.
 
 ## Technology Stack
 - **Frontend**: Next.js 14+ (App Router) + React + TypeScript

@@ -1,11 +1,13 @@
 {
   "home": {
-    "title": "Iran Revolution Accountability Platform",
+    "title": "Gard-e Javidan",
     "subtitle": "A public, verification-based archive for documenting regime members and victims.",
     "ctaPrimary": "Report a case",
     "ctaSecondary": "Browse records"
   },
   "nav": {
+    "brandName": "Gard-e Javidan",
+    "brandTagline": "Documentation & Verification System",
     "language": "Language",
     "regimeMembers": "Regime members",
     "victims": "Victims",
@@ -225,19 +227,31 @@
       "submit": "Submit record",
       "submitting": "Submitting..."
     },
-    "history": {
-      "title": "History",
-      "subtitle": "Past versions and audit trail.",
-      "loading": "Loading history...",
-      "empty": "No history found.",
-      "back": "Back"
-    },
     "status": {
       "murdered": "Murdered",
       "captured": "Captured",
       "vanished": "Vanished",
       "released": "Released",
       "confirmed_dead": "Confirmed dead"
+    }
+  },
+  "history": {
+    "title": "History",
+    "subtitle": "Past versions and audit trail.",
+    "loading": "Loading history...",
+    "empty": "No history found.",
+    "back": "Back"
+  },
+  "updates": {
+    "title": "Live updates",
+    "subtitle": "Latest verified records",
+    "loading": "Loading updates...",
+    "empty": "No recent updates.",
+    "refresh": "Refresh",
+    "types": {
+      "regimeMembers": "Regime member",
+      "victims": "Victim",
+      "actions": "Action"
     }
   }
 }

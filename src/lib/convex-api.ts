@@ -210,4 +210,18 @@ export const api = {
       boolean
     >("sessions:recordContribution"),
   },
+  recent: {
+    feed: makeFunctionReference<
+      "query",
+      { limit?: number },
+      {
+        _id: string;
+        type: "regimeMembers" | "victims" | "actions";
+        title: string;
+        subtitle: string;
+        status: string;
+        createdAt: number;
+      }[]
+    >("recent:feed"),
+  },
 } as const;
