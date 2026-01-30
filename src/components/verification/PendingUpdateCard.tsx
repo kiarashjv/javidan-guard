@@ -1,11 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useMutation } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Card,
   CardContent,
@@ -44,6 +55,9 @@ export function PendingUpdateCard({
   const t = useTranslations("pendingUpdates");
   const locale = useLocale();
   const verify = useMutation(api.pendingUpdates.verify);
+  const reject = useMutation(api.pendingUpdates.reject);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const parsedChanges = useMemo(() => {
     try {
@@ -83,6 +97,8 @@ export function PendingUpdateCard({
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
   async function handleVerify() {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
     await verify({
@@ -91,6 +107,23 @@ export function PendingUpdateCard({
       ipHash: clientMeta.ipHash,
       userAgent: clientMeta.userAgent,
     });
+    setIsSubmitting(false);
+  }
+
+  async function handleReject() {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const sessionId = getSessionId();
+    const clientMeta = getClientMeta();
+    await reject({
+      pendingUpdateId: id,
+      sessionId,
+      ipHash: clientMeta.ipHash,
+      userAgent: clientMeta.userAgent,
+      reason: rejectReason.trim() || t("rejectFallback"),
+    });
+    setRejectReason("");
+    setIsSubmitting(false);
   }
 
   return (
@@ -119,6 +152,9 @@ export function PendingUpdateCard({
         <div className="space-y-2">
           {Object.entries(parsedChanges).map(([key, value]) => {
             const currentValue = parsedSnapshot[key];
+            const currentText = currentValue ? String(currentValue) : t("unknown");
+            const proposedText = String(value);
+            const hasChanged = currentText !== proposedText;
             return (
               <div
                 key={key}
@@ -130,13 +166,17 @@ export function PendingUpdateCard({
                 <div className="grid gap-2 md:grid-cols-2">
                   <div>
                     <div className="text-xs text-zinc-500">{t("current")}</div>
-                    <div className="text-sm text-zinc-700">
-                      {currentValue ? String(currentValue) : t("unknown")}
-                    </div>
+                    <div className="text-sm text-zinc-700">{currentText}</div>
                   </div>
                   <div>
                     <div className="text-xs text-zinc-500">{t("proposed")}</div>
-                    <div className="text-sm font-medium text-zinc-900">{value}</div>
+                    <div
+                      className={`text-sm font-medium ${
+                        hasChanged ? "text-emerald-700" : "text-zinc-500"
+                      }`}
+                    >
+                      {proposedText}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -144,7 +184,32 @@ export function PendingUpdateCard({
           })}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={handleVerify}>{t("verify")}</Button>
+          <Button onClick={handleVerify} disabled={isSubmitting}>
+            {t("verify")}
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" disabled={isSubmitting}>
+                {t("reject")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("rejectTitle")}</AlertDialogTitle>
+              </AlertDialogHeader>
+              <Textarea
+                value={rejectReason}
+                onChange={(event) => setRejectReason(event.target.value)}
+                placeholder={t("rejectPlaceholder")}
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReject}>
+                  {t("confirmReject")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           {targetHref ? (
             <Button asChild variant="outline">
               <Link href={targetHref}>{t("viewTarget")}</Link>
