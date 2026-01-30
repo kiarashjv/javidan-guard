@@ -97,6 +97,7 @@
     "expiresAt": "Expires {date}",
     "reason": "Reason",
     "fieldPending": "Pending change",
+    "otherPendingFields": "Other pending fields",
     "details": "Details",
     "hideDetails": "Hide details",
     "verifyShort": "Approve",

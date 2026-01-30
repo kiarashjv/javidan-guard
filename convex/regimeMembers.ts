@@ -30,9 +30,27 @@ export const getById = queryGeneric({
     ctx: QueryCtx,
     args: { id: GenericId<"regimeMembers"> }
   ) => {
-    return ctx.db.get(args.id);
+    return resolveCurrentRegimeMember(ctx, args.id);
   },
 });
+
+async function resolveCurrentRegimeMember(
+  ctx: QueryCtx,
+  id: GenericId<"regimeMembers">
+) {
+  let current = await ctx.db.get(id);
+  let hops = 0;
+  while (
+    current &&
+    current.currentVersion === false &&
+    current.supersededBy &&
+    hops < 5
+  ) {
+    current = await ctx.db.get(current.supersededBy as GenericId<"regimeMembers">);
+    hops += 1;
+  }
+  return current;
+}
 
 export const create = mutationGeneric({
   args: {

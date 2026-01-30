@@ -97,6 +97,7 @@
     "expiresAt": "انقضا در {date}",
     "reason": "دلیل",
     "fieldPending": "تغییر در انتظار",
+    "otherPendingFields": "سایر فیلدهای در انتظار",
     "details": "جزئیات",
     "hideDetails": "بستن جزئیات",
     "verifyShort": "تایید",

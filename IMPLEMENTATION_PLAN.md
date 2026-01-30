@@ -492,6 +492,7 @@ iran-revolution-platform/
 6. Documentation (Farsi & English)
 7. Live marquee banner for recent names/news (RTL/LTR, accessible, pausable)
 8. Sidebar metrics: online users, contribution counts, and other community stats
+9. Pagination limits: server-driven paging (max 2–3 pages), fixed page size (20), remove client page-size selector, avoid fetching full tables
 
 ## Critical Files to Create
 

@@ -27,9 +27,24 @@ export const listCurrent = queryGeneric({
 export const getById = queryGeneric({
   args: { id: v.id("victims") },
   handler: async (ctx: QueryCtx, args: { id: GenericId<"victims"> }) => {
-    return ctx.db.get(args.id);
+    return resolveCurrentVictim(ctx, args.id);
   },
 });
+
+async function resolveCurrentVictim(ctx: QueryCtx, id: GenericId<"victims">) {
+  let current = await ctx.db.get(id);
+  let hops = 0;
+  while (
+    current &&
+    current.currentVersion === false &&
+    current.supersededBy &&
+    hops < 5
+  ) {
+    current = await ctx.db.get(current.supersededBy as GenericId<"victims">);
+    hops += 1;
+  }
+  return current;
+}
 
 export const create = mutationGeneric({
   args: {

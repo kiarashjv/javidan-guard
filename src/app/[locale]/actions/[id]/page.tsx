@@ -8,6 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -65,6 +72,25 @@ export default function ActionDetailPage({
   }, [pendingUpdates]);
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
+  const shownKeys = useMemo(
+    () => new Set(["actionType", "date", "location", "description"]),
+    []
+  );
+  const fieldLabels = useMemo(
+    () => ({
+      actionType: actionsT("form.actionType"),
+      date: actionsT("form.date"),
+      location: actionsT("form.location"),
+      description: actionsT("form.description"),
+      perpetratorId: actionsT("form.perpetratorId"),
+      victimIds: actionsT("form.victimIds"),
+      evidenceUrls: actionsT("form.evidenceUrls"),
+      videoLinks: actionsT("form.videoLinks"),
+      documentLinks: actionsT("form.documentLinks"),
+      witnessStatements: actionsT("form.witnessStatements"),
+    }),
+    [actionsT]
+  );
 
 
   const currentValueLabel = (value: string | undefined) =>
@@ -202,6 +228,22 @@ export default function ActionDetailPage({
                 />
               ) : null}
             </div>
+            {Object.keys(pendingByField).some((key) => !shownKeys.has(key)) ? (
+              <div className="space-y-2 md:col-span-2">
+                <div className="text-xs text-muted-foreground">
+                  {pendingT("otherPendingFields")}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.keys(pendingByField)
+                    .filter((key) => !shownKeys.has(key))
+                    .map((key) => (
+                      <Badge key={key} variant="secondary">
+                        {fieldLabels[key as keyof typeof fieldLabels] ?? key}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div>
             <Button asChild variant="outline" size="sm">
@@ -223,14 +265,24 @@ export default function ActionDetailPage({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="update-action-type">{t("propose.actionType")}</Label>
-                <Input
-                  id="update-action-type"
+                <Select
                   value={formState.actionType}
-                  disabled={isFieldPending("actionType")}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, actionType: event.target.value }))
+                  onValueChange={(value) =>
+                    setFormState((prev) => ({ ...prev, actionType: value }))
                   }
-                />
+                  disabled={isFieldPending("actionType")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("propose.actionType")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="killing">{actionsT("types.killing")}</SelectItem>
+                    <SelectItem value="torture">{actionsT("types.torture")}</SelectItem>
+                    <SelectItem value="arrest">{actionsT("types.arrest")}</SelectItem>
+                    <SelectItem value="assault">{actionsT("types.assault")}</SelectItem>
+                    <SelectItem value="other">{actionsT("types.other")}</SelectItem>
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-muted-foreground">
                   {currentValueLabel(actionsT(`types.${typed.actionType}`))}
                 </p>

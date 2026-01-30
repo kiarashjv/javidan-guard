@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -68,6 +75,34 @@ export default function RegimeMemberDetailPage({
   }, [pendingUpdates]);
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
+  const shownKeys = useMemo(
+    () =>
+      new Set([
+        "name",
+        "status",
+        "organization",
+        "unit",
+        "position",
+        "rank",
+        "lastKnownLocation",
+        "photoUrls",
+      ]),
+    []
+  );
+  const fieldLabels = useMemo(
+    () => ({
+      name: membersT("form.name"),
+      organization: membersT("form.organization"),
+      unit: membersT("form.unit"),
+      position: membersT("form.position"),
+      rank: membersT("form.rank"),
+      status: membersT("form.status"),
+      lastKnownLocation: membersT("form.location"),
+      aliases: membersT("form.aliases"),
+      photoUrls: membersT("form.photos"),
+    }),
+    [membersT]
+  );
 
 
   const [formState, setFormState] = useState({
@@ -360,6 +395,22 @@ export default function RegimeMemberDetailPage({
                 </div>
               </div>
             ) : null}
+            {Object.keys(pendingByField).some((key) => !shownKeys.has(key)) ? (
+              <div className="space-y-2 md:col-span-2">
+                <div className="text-xs text-muted-foreground">
+                  {pendingT("otherPendingFields")}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.keys(pendingByField)
+                    .filter((key) => !shownKeys.has(key))
+                    .map((key) => (
+                      <Badge key={key} variant="secondary">
+                        {fieldLabels[key as keyof typeof fieldLabels] ?? key}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div>{t("notes")}</div>
         </CardContent>
@@ -451,14 +502,24 @@ export default function RegimeMemberDetailPage({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-status">{t("propose.status")}</Label>
-                <Input
-                  id="update-status"
+                <Select
                   value={formState.status}
-                  disabled={isFieldPending("status")}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, status: event.target.value }))
+                  onValueChange={(value) =>
+                    setFormState((prev) => ({ ...prev, status: value }))
                   }
-                />
+                  disabled={isFieldPending("status")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("propose.status")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">{membersT("status.active")}</SelectItem>
+                    <SelectItem value="arrested">{membersT("status.arrested")}</SelectItem>
+                    <SelectItem value="fled">{membersT("status.fled")}</SelectItem>
+                    <SelectItem value="deceased">{membersT("status.deceased")}</SelectItem>
+                    <SelectItem value="unknown">{membersT("status.unknown")}</SelectItem>
+                  </SelectContent>
+                </Select>
                 {isFieldPending("status") ? (
                   <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
                 ) : null}

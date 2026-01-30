@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -68,6 +75,36 @@ export default function VictimDetailPage({
   }, [pendingUpdates]);
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
+  const shownKeys = useMemo(
+    () =>
+      new Set([
+        "name",
+        "status",
+        "hometown",
+        "incidentDate",
+        "incidentLocation",
+        "circumstances",
+        "photoUrls",
+      ]),
+    []
+  );
+  const fieldLabels = useMemo(
+    () => ({
+      name: victimsT("form.name"),
+      hometown: victimsT("form.hometown"),
+      status: victimsT("form.status"),
+      incidentDate: victimsT("form.incidentDate"),
+      incidentLocation: victimsT("form.incidentLocation"),
+      circumstances: victimsT("form.circumstances"),
+      evidenceLinks: victimsT("form.evidenceLinks"),
+      newsReports: victimsT("form.newsReports"),
+      witnessAccounts: victimsT("form.witnessAccounts"),
+      linkedPerpetrators: victimsT("form.linkedPerpetrators"),
+      photoUrls: victimsT("form.photos"),
+      age: victimsT("form.age"),
+    }),
+    [victimsT]
+  );
 
 
   const currentValueLabel = (value: string | undefined) =>
@@ -344,6 +381,22 @@ export default function VictimDetailPage({
                 </div>
               </div>
             ) : null}
+            {Object.keys(pendingByField).some((key) => !shownKeys.has(key)) ? (
+              <div className="space-y-2 md:col-span-2">
+                <div className="text-xs text-muted-foreground">
+                  {pendingT("otherPendingFields")}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.keys(pendingByField)
+                    .filter((key) => !shownKeys.has(key))
+                    .map((key) => (
+                      <Badge key={key} variant="secondary">
+                        {fieldLabels[key as keyof typeof fieldLabels] ?? key}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -392,14 +445,26 @@ export default function VictimDetailPage({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-victim-status">{t("propose.status")}</Label>
-                <Input
-                  id="update-victim-status"
+                <Select
                   value={formState.status}
-                  disabled={isFieldPending("status")}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, status: event.target.value }))
+                  onValueChange={(value) =>
+                    setFormState((prev) => ({ ...prev, status: value }))
                   }
-                />
+                  disabled={isFieldPending("status")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("propose.status")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="murdered">{victimsT("status.murdered")}</SelectItem>
+                    <SelectItem value="captured">{victimsT("status.captured")}</SelectItem>
+                    <SelectItem value="vanished">{victimsT("status.vanished")}</SelectItem>
+                    <SelectItem value="released">{victimsT("status.released")}</SelectItem>
+                    <SelectItem value="confirmed_dead">
+                      {victimsT("status.confirmed_dead")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-muted-foreground">
                   {currentValueLabel(t(`status.${victim.status}`))}
                 </p>

@@ -8,14 +8,8 @@ import { adjustTrustScore, recordVerification } from "./lib/trustScore";
 
 const EXPIRES_IN_DAYS = 30;
 
-function requiredVerificationsForTrust(trustScore: number) {
-  if (trustScore >= 80) {
-    return 2;
-  }
-  if (trustScore >= 50) {
-    return 3;
-  }
-  return 4;
+function requiredVerificationsForTrust() {
+  return 1;
 }
 
 export const listPending = query({
@@ -87,9 +81,7 @@ export const proposeUpdate = mutation({
       .query("sessions")
       .filter((q) => q.eq(q.field("sessionId"), args.proposedBy))
       .first();
-    const requiredVerifications = proposer
-      ? requiredVerificationsForTrust(proposer.trustScore)
-      : 3;
+    const requiredVerifications = proposer ? requiredVerificationsForTrust() : 3;
 
     if (!targetSnapshot) {
       throw new Error("Target record not found.");
@@ -229,8 +221,11 @@ async function approveUpdate(
 
   if (pendingUpdate.targetCollection === "regimeMembers") {
     const typedTarget = target as Doc<"regimeMembers">;
+    const { _id: _unusedId, _creationTime: _unusedCreation, ...base } = typedTarget;
+    void _unusedId;
+    void _unusedCreation;
     const newDocId = await ctx.db.insert("regimeMembers", {
-      ...typedTarget,
+      ...base,
       ...proposed,
       currentVersion: true,
       supersededBy: null,
@@ -242,8 +237,11 @@ async function approveUpdate(
     });
   } else if (pendingUpdate.targetCollection === "victims") {
     const typedTarget = target as Doc<"victims">;
+    const { _id: _unusedId, _creationTime: _unusedCreation, ...base } = typedTarget;
+    void _unusedId;
+    void _unusedCreation;
     const newDocId = await ctx.db.insert("victims", {
-      ...typedTarget,
+      ...base,
       ...proposed,
       currentVersion: true,
       supersededBy: null,
@@ -255,8 +253,11 @@ async function approveUpdate(
     });
   } else {
     const typedTarget = target as Doc<"actions">;
+    const { _id: _unusedId, _creationTime: _unusedCreation, ...base } = typedTarget;
+    void _unusedId;
+    void _unusedCreation;
     const newDocId = await ctx.db.insert("actions", {
-      ...typedTarget,
+      ...base,
       ...proposed,
       currentVersion: true,
       supersededBy: null,

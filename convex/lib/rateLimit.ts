@@ -5,7 +5,7 @@ const MAX_CONTRIBUTIONS_PER_HOUR = 10;
 
 export async function checkAndRecordContribution(
   ctx: MutationCtx,
-  sessionId: string
+  sessionId: string,
 ) {
   const session = await ctx.db
     .query("sessions")
