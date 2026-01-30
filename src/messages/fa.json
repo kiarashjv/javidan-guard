@@ -248,6 +248,9 @@
     "loading": "در حال بارگذاری...",
     "empty": "به‌روزرسانی جدیدی نیست.",
     "refresh": "تازه‌سازی",
+    "updatedLabel": "آخرین به‌روزرسانی {time}",
+    "newUpdates": "به‌روزرسانی جدید موجود است.",
+    "showNew": "نمایش",
     "types": {
       "regimeMembers": "عضو رژیم",
       "victims": "قربانی",

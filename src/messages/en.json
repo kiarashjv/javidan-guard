@@ -248,6 +248,9 @@
     "loading": "Loading updates...",
     "empty": "No recent updates.",
     "refresh": "Refresh",
+    "updatedLabel": "Updated {time}",
+    "newUpdates": "New updates available.",
+    "showNew": "Show",
     "types": {
       "regimeMembers": "Regime member",
       "victims": "Victim",
