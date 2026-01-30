@@ -95,6 +95,10 @@
     "expiresAt": "Expires {date}",
     "reason": "Reason",
     "fieldPending": "Pending change",
+    "details": "Details",
+    "hideDetails": "Hide details",
+    "verifyShort": "Approve",
+    "rejectShort": "Reject",
     "fieldLocked": "A pending change exists for this field. Reject it to propose a new one.",
     "filters": {
       "regimeMembers": "Regime members",

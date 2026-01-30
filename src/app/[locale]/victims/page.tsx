@@ -173,19 +173,6 @@ export default function VictimsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="victim-hometown">{t("form.hometown")}</Label>
-                <Input
-                  id="victim-hometown"
-                  value={formState.hometown}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      hometown: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>{t("form.status")}</Label>
                 <Select
                   value={formState.status}
@@ -224,19 +211,6 @@ export default function VictimsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="victim-location">{t("form.incidentLocation")}</Label>
-                <Input
-                  id="victim-location"
-                  value={formState.incidentLocation}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      incidentLocation: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="victim-circumstances">{t("form.circumstances")}</Label>
                 <Textarea
                   id="victim-circumstances"
@@ -297,6 +271,32 @@ export default function VictimsPage() {
                     setFormState((prev) => ({
                       ...prev,
                       linkedPerpetrators: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="victim-hometown">{t("form.hometown")}</Label>
+                <Input
+                  id="victim-hometown"
+                  value={formState.hometown}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      hometown: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="victim-location">{t("form.incidentLocation")}</Label>
+                <Input
+                  id="victim-location"
+                  value={formState.incidentLocation}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      incidentLocation: event.target.value,
                     }))
                   }
                 />

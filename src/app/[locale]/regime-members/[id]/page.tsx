@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
-import { use } from "react";
-import { useState } from "react";
+import { use, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,7 @@ import {
 import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
+import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
 
 export default function RegimeMemberDetailPage({
   params,
@@ -31,8 +31,40 @@ export default function RegimeMemberDetailPage({
   const locale = useLocale();
   const t = useTranslations("regimeMember");
   const membersT = useTranslations("regimeMembers");
+  const pendingT = useTranslations("pendingUpdates");
   const member = useQuery(api.regimeMembers.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
+  const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
+    targetCollection: "regimeMembers",
+    targetId: id,
+  });
+
+  const pendingByField = useMemo(() => {
+    if (!pendingUpdates) {
+      return {} as Record<
+        string,
+        { update: PendingUpdateRecord; proposedValue: string }
+      >;
+    }
+    const result: Record<string, { update: PendingUpdateRecord; proposedValue: string }> = {};
+    for (const update of pendingUpdates) {
+      let parsed: Record<string, string>;
+      try {
+        parsed = JSON.parse(update.proposedChanges) as Record<string, string>;
+      } catch {
+        continue;
+      }
+      for (const [key, value] of Object.entries(parsed)) {
+        const existing = result[key];
+        if (!existing || update.proposedAt > existing.update.proposedAt) {
+          result[key] = { update, proposedValue: value };
+        }
+      }
+    }
+    return result;
+  }, [pendingUpdates]);
+
+  const isFieldPending = (field: string) => Boolean(pendingByField[field]);
 
   const [formState, setFormState] = useState({
     name: "",
@@ -119,12 +151,91 @@ export default function RegimeMemberDetailPage({
             {member.organization} · {member.unit}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm text-zinc-600">
+        <CardContent className="space-y-6 text-sm text-zinc-600">
           <div>
             {t("recordId")}: {member._id}
           </div>
-          <div>
-            {t("location")}: {member.lastKnownLocation}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{membersT("form.name")}</div>
+              <div className="text-base text-foreground">{member.name}</div>
+              {pendingByField.name ? (
+                <PendingFieldUpdate
+                  update={pendingByField.name.update}
+                  proposedValue={pendingByField.name.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.status")}
+              </div>
+              <div className="text-base text-foreground">
+                {membersT(`status.${member.status}`)}
+              </div>
+              {pendingByField.status ? (
+                <PendingFieldUpdate
+                  update={pendingByField.status.update}
+                  proposedValue={pendingByField.status.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.organization")}
+              </div>
+              <div className="text-base text-foreground">{member.organization}</div>
+              {pendingByField.organization ? (
+                <PendingFieldUpdate
+                  update={pendingByField.organization.update}
+                  proposedValue={pendingByField.organization.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{membersT("form.unit")}</div>
+              <div className="text-base text-foreground">{member.unit}</div>
+              {pendingByField.unit ? (
+                <PendingFieldUpdate
+                  update={pendingByField.unit.update}
+                  proposedValue={pendingByField.unit.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.position")}
+              </div>
+              <div className="text-base text-foreground">{member.position}</div>
+              {pendingByField.position ? (
+                <PendingFieldUpdate
+                  update={pendingByField.position.update}
+                  proposedValue={pendingByField.position.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{membersT("form.rank")}</div>
+              <div className="text-base text-foreground">{member.rank}</div>
+              {pendingByField.rank ? (
+                <PendingFieldUpdate
+                  update={pendingByField.rank.update}
+                  proposedValue={pendingByField.rank.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.location")}
+              </div>
+              <div className="text-base text-foreground">{member.lastKnownLocation}</div>
+              {pendingByField.lastKnownLocation ? (
+                <PendingFieldUpdate
+                  update={pendingByField.lastKnownLocation.update}
+                  proposedValue={pendingByField.lastKnownLocation.proposedValue}
+                />
+              ) : null}
+            </div>
           </div>
           <div>{t("notes")}</div>
         </CardContent>
@@ -143,16 +254,21 @@ export default function RegimeMemberDetailPage({
                 <Input
                   id="update-name"
                   value={formState.name}
+                  disabled={isFieldPending("name")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, name: event.target.value }))
                   }
                 />
+                {isFieldPending("name") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-organization">{t("propose.organization")}</Label>
                 <Input
                   id="update-organization"
                   value={formState.organization}
+                  disabled={isFieldPending("organization")}
                   onChange={(event) =>
                     setFormState((prev) => ({
                       ...prev,
@@ -160,22 +276,30 @@ export default function RegimeMemberDetailPage({
                     }))
                   }
                 />
+                {isFieldPending("organization") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-unit">{t("propose.unit")}</Label>
                 <Input
                   id="update-unit"
                   value={formState.unit}
+                  disabled={isFieldPending("unit")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, unit: event.target.value }))
                   }
                 />
+                {isFieldPending("unit") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-position">{t("propose.position")}</Label>
                 <Input
                   id="update-position"
                   value={formState.position}
+                  disabled={isFieldPending("position")}
                   onChange={(event) =>
                     setFormState((prev) => ({
                       ...prev,
@@ -183,32 +307,44 @@ export default function RegimeMemberDetailPage({
                     }))
                   }
                 />
+                {isFieldPending("position") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-rank">{t("propose.rank")}</Label>
                 <Input
                   id="update-rank"
                   value={formState.rank}
+                  disabled={isFieldPending("rank")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, rank: event.target.value }))
                   }
                 />
+                {isFieldPending("rank") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-status">{t("propose.status")}</Label>
                 <Input
                   id="update-status"
                   value={formState.status}
+                  disabled={isFieldPending("status")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, status: event.target.value }))
                   }
                 />
+                {isFieldPending("status") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="update-location">{t("propose.location")}</Label>
                 <Input
                   id="update-location"
                   value={formState.lastKnownLocation}
+                  disabled={isFieldPending("lastKnownLocation")}
                   onChange={(event) =>
                     setFormState((prev) => ({
                       ...prev,
@@ -216,6 +352,9 @@ export default function RegimeMemberDetailPage({
                     }))
                   }
                 />
+                {isFieldPending("lastKnownLocation") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
             </div>
             <Separator />
@@ -238,3 +377,13 @@ export default function RegimeMemberDetailPage({
     </section>
   );
 }
+
+type PendingUpdateRecord = {
+  _id: string;
+  proposedChanges: string;
+  proposedAt: number;
+  expiresAt: number;
+  currentVerifications: number;
+  requiredVerifications: number;
+  reason?: string | null;
+};

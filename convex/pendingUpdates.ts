@@ -95,6 +95,41 @@ export const proposeUpdate = mutation({
       throw new Error("Target record not found.");
     }
 
+    let parsedChanges: Record<string, unknown>;
+    try {
+      parsedChanges = JSON.parse(args.proposedChanges) as Record<string, unknown>;
+    } catch {
+      throw new Error("Invalid proposed changes.");
+    }
+
+    const proposedKeys = new Set(Object.keys(parsedChanges));
+    if (proposedKeys.size === 0) {
+      throw new Error("No proposed changes provided.");
+    }
+
+    const existingPending = await ctx.db
+      .query("pendingUpdates")
+      .filter((q) => q.eq(q.field("targetCollection"), args.targetCollection))
+      .filter((q) => q.eq(q.field("targetId"), args.targetId))
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+
+    for (const pending of existingPending) {
+      let existingChanges: Record<string, unknown>;
+      try {
+        existingChanges = JSON.parse(pending.proposedChanges) as Record<string, unknown>;
+      } catch {
+        continue;
+      }
+      for (const key of Object.keys(existingChanges)) {
+        if (proposedKeys.has(key)) {
+          throw new Error(
+            "A pending update already exists for one or more requested fields."
+          );
+        }
+      }
+    }
+
     const id = await ctx.db.insert("pendingUpdates", {
       targetCollection: args.targetCollection,
       targetId: args.targetId,

@@ -95,6 +95,10 @@
     "expiresAt": "انقضا در {date}",
     "reason": "دلیل",
     "fieldPending": "تغییر در انتظار",
+    "details": "جزئیات",
+    "hideDetails": "بستن جزئیات",
+    "verifyShort": "تایید",
+    "rejectShort": "رد",
     "fieldLocked": "برای این فیلد یک تغییر در انتظار است. برای ثبت جدید ابتدا آن را رد کنید.",
     "filters": {
       "regimeMembers": "اعضای رژیم",

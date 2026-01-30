@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
-import { use } from "react";
-import { useState } from "react";
+import { use, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingUpdateCard } from "@/components/verification/PendingUpdateCard";
+import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
 
 export default function VictimDetailPage({
   params,
@@ -31,12 +31,46 @@ export default function VictimDetailPage({
   const { id } = use(params);
   const locale = useLocale();
   const t = useTranslations("victimDetail");
+  const victimsT = useTranslations("victims");
+  const pendingT = useTranslations("pendingUpdates");
   const victim = useQuery(api.victims.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
   const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
     targetCollection: "victims",
     targetId: id,
   });
+
+  const pendingByField = useMemo(() => {
+    if (!pendingUpdates) {
+      return {} as Record<
+        string,
+        { update: PendingUpdateRecord; proposedValue: string }
+      >;
+    }
+    const result: Record<string, { update: PendingUpdateRecord; proposedValue: string }> = {};
+    for (const update of pendingUpdates) {
+      let parsed: Record<string, string>;
+      try {
+        parsed = JSON.parse(update.proposedChanges) as Record<string, string>;
+      } catch {
+        continue;
+      }
+      for (const [key, value] of Object.entries(parsed)) {
+        const existing = result[key];
+        if (!existing || update.proposedAt > existing.update.proposedAt) {
+          result[key] = { update, proposedValue: value };
+        }
+      }
+    }
+    return result;
+  }, [pendingUpdates]);
+
+  const isFieldPending = (field: string) => Boolean(pendingByField[field]);
+
+  const currentValueLabel = (value: string | undefined) =>
+    t("propose.currentValue", {
+      value: value?.trim().length ? value : t("propose.currentValueEmpty"),
+    });
 
   const [formState, setFormState] = useState({
     name: "",
@@ -119,14 +153,78 @@ export default function VictimDetailPage({
             {victim.incidentLocation} · {victim.incidentDate}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm text-zinc-600">
+        <CardContent className="space-y-6 text-sm text-zinc-600">
           <div>
             {t("recordId")}: {victim._id}
           </div>
-          <div>
-            {t("hometown")}: {victim.hometown}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{victimsT("form.name")}</div>
+              <div className="text-base text-foreground">{victim.name}</div>
+              {pendingByField.name ? (
+                <PendingFieldUpdate
+                  update={pendingByField.name.update}
+                  proposedValue={pendingByField.name.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{victimsT("form.status")}</div>
+              <div className="text-base text-foreground">{t(`status.${victim.status}`)}</div>
+              {pendingByField.status ? (
+                <PendingFieldUpdate
+                  update={pendingByField.status.update}
+                  proposedValue={pendingByField.status.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{victimsT("form.hometown")}</div>
+              <div className="text-base text-foreground">{victim.hometown}</div>
+              {pendingByField.hometown ? (
+                <PendingFieldUpdate
+                  update={pendingByField.hometown.update}
+                  proposedValue={pendingByField.hometown.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">
+                {victimsT("form.incidentDate")}
+              </div>
+              <div className="text-base text-foreground">{victim.incidentDate}</div>
+              {pendingByField.incidentDate ? (
+                <PendingFieldUpdate
+                  update={pendingByField.incidentDate.update}
+                  proposedValue={pendingByField.incidentDate.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">
+                {victimsT("form.incidentLocation")}
+              </div>
+              <div className="text-base text-foreground">{victim.incidentLocation}</div>
+              {pendingByField.incidentLocation ? (
+                <PendingFieldUpdate
+                  update={pendingByField.incidentLocation.update}
+                  proposedValue={pendingByField.incidentLocation.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <div className="text-xs text-muted-foreground">
+                {victimsT("form.circumstances")}
+              </div>
+              <div className="text-base text-foreground">{victim.circumstances}</div>
+              {pendingByField.circumstances ? (
+                <PendingFieldUpdate
+                  update={pendingByField.circumstances.update}
+                  proposedValue={pendingByField.circumstances.proposedValue}
+                />
+              ) : null}
+            </div>
           </div>
-          <div>{victim.circumstances}</div>
         </CardContent>
       </Card>
 
@@ -143,50 +241,85 @@ export default function VictimDetailPage({
                 <Input
                   id="update-victim-name"
                   value={formState.name}
+                  disabled={isFieldPending("name")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, name: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(victim.name)}
+                </p>
+                {isFieldPending("name") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-victim-hometown">{t("propose.hometown")}</Label>
                 <Input
                   id="update-victim-hometown"
                   value={formState.hometown}
+                  disabled={isFieldPending("hometown")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, hometown: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(victim.hometown)}
+                </p>
+                {isFieldPending("hometown") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-victim-status">{t("propose.status")}</Label>
                 <Input
                   id="update-victim-status"
                   value={formState.status}
+                  disabled={isFieldPending("status")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, status: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(t(`status.${victim.status}`))}
+                </p>
+                {isFieldPending("status") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-victim-date">{t("propose.incidentDate")}</Label>
                 <Input
                   id="update-victim-date"
                   value={formState.incidentDate}
+                  disabled={isFieldPending("incidentDate")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, incidentDate: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(victim.incidentDate)}
+                </p>
+                {isFieldPending("incidentDate") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-victim-location">{t("propose.incidentLocation")}</Label>
                 <Input
                   id="update-victim-location"
                   value={formState.incidentLocation}
+                  disabled={isFieldPending("incidentLocation")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, incidentLocation: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(victim.incidentLocation)}
+                </p>
+                {isFieldPending("incidentLocation") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="update-victim-circumstances">
@@ -195,10 +328,17 @@ export default function VictimDetailPage({
                 <Textarea
                   id="update-victim-circumstances"
                   value={formState.circumstances}
+                  disabled={isFieldPending("circumstances")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, circumstances: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(victim.circumstances)}
+                </p>
+                {isFieldPending("circumstances") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
             </div>
             <Separator />
@@ -250,3 +390,13 @@ export default function VictimDetailPage({
     </section>
   );
 }
+
+type PendingUpdateRecord = {
+  _id: string;
+  proposedChanges: string;
+  proposedAt: number;
+  expiresAt: number;
+  currentVerifications: number;
+  requiredVerifications: number;
+  reason?: string | null;
+};

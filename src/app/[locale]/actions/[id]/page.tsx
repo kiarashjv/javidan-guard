@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
-import { use } from "react";
-import { useState } from "react";
+import { use, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import { api } from "@/lib/convex-api";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingUpdateCard } from "@/components/verification/PendingUpdateCard";
+import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
 
 export default function ActionDetailPage({
   params,
@@ -31,12 +31,46 @@ export default function ActionDetailPage({
   const { id } = use(params);
   const locale = useLocale();
   const t = useTranslations("actionDetail");
+  const actionsT = useTranslations("actions");
+  const pendingT = useTranslations("pendingUpdates");
   const action = useQuery(api.actions.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
   const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
     targetCollection: "actions",
     targetId: id,
   });
+
+  const pendingByField = useMemo(() => {
+    if (!pendingUpdates) {
+      return {} as Record<
+        string,
+        { update: PendingUpdateRecord; proposedValue: string }
+      >;
+    }
+    const result: Record<string, { update: PendingUpdateRecord; proposedValue: string }> = {};
+    for (const update of pendingUpdates) {
+      let parsed: Record<string, string>;
+      try {
+        parsed = JSON.parse(update.proposedChanges) as Record<string, string>;
+      } catch {
+        continue;
+      }
+      for (const [key, value] of Object.entries(parsed)) {
+        const existing = result[key];
+        if (!existing || update.proposedAt > existing.update.proposedAt) {
+          result[key] = { update, proposedValue: value };
+        }
+      }
+    }
+    return result;
+  }, [pendingUpdates]);
+
+  const isFieldPending = (field: string) => Boolean(pendingByField[field]);
+
+  const currentValueLabel = (value: string | undefined) =>
+    t("propose.currentValue", {
+      value: value?.trim().length ? value : t("propose.currentValueEmpty"),
+    });
 
   const [formState, setFormState] = useState({
     actionType: "",
@@ -121,11 +155,54 @@ export default function ActionDetailPage({
           </div>
           <CardDescription>{typed.location}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm text-zinc-600">
+        <CardContent className="space-y-6 text-sm text-zinc-600">
           <div>
             {t("recordId")}: {typed._id}
           </div>
-          <div>{typed.description}</div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{actionsT("form.actionType")}</div>
+              <div className="text-base text-foreground">
+                {actionsT(`types.${typed.actionType}`)}
+              </div>
+              {pendingByField.actionType ? (
+                <PendingFieldUpdate
+                  update={pendingByField.actionType.update}
+                  proposedValue={pendingByField.actionType.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{actionsT("form.date")}</div>
+              <div className="text-base text-foreground">{typed.date}</div>
+              {pendingByField.date ? (
+                <PendingFieldUpdate
+                  update={pendingByField.date.update}
+                  proposedValue={pendingByField.date.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{actionsT("form.location")}</div>
+              <div className="text-base text-foreground">{typed.location}</div>
+              {pendingByField.location ? (
+                <PendingFieldUpdate
+                  update={pendingByField.location.update}
+                  proposedValue={pendingByField.location.proposedValue}
+                />
+              ) : null}
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <div className="text-xs text-muted-foreground">{actionsT("form.description")}</div>
+              <div className="text-base text-foreground">{typed.description}</div>
+              {pendingByField.description ? (
+                <PendingFieldUpdate
+                  update={pendingByField.description.update}
+                  proposedValue={pendingByField.description.proposedValue}
+                />
+              ) : null}
+            </div>
+          </div>
           <div>
             <Button asChild variant="outline" size="sm">
               <Link href={`/${locale}/actions/${typed._id}/history`}>
@@ -149,40 +226,68 @@ export default function ActionDetailPage({
                 <Input
                   id="update-action-type"
                   value={formState.actionType}
+                  disabled={isFieldPending("actionType")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, actionType: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(actionsT(`types.${typed.actionType}`))}
+                </p>
+                {isFieldPending("actionType") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-action-date">{t("propose.date")}</Label>
                 <Input
                   id="update-action-date"
                   value={formState.date}
+                  disabled={isFieldPending("date")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, date: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(typed.date)}
+                </p>
+                {isFieldPending("date") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="update-action-location">{t("propose.location")}</Label>
                 <Input
                   id="update-action-location"
                   value={formState.location}
+                  disabled={isFieldPending("location")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, location: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(typed.location)}
+                </p>
+                {isFieldPending("location") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="update-action-description">{t("propose.description")}</Label>
                 <Textarea
                   id="update-action-description"
                   value={formState.description}
+                  disabled={isFieldPending("description")}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, description: event.target.value }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  {currentValueLabel(typed.description)}
+                </p>
+                {isFieldPending("description") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
               </div>
             </div>
             <Separator />
@@ -234,3 +339,13 @@ export default function ActionDetailPage({
     </section>
   );
 }
+
+type PendingUpdateRecord = {
+  _id: string;
+  proposedChanges: string;
+  proposedAt: number;
+  expiresAt: number;
+  currentVerifications: number;
+  requiredVerifications: number;
+  reason?: string | null;
+};
