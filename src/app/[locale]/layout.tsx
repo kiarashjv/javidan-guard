@@ -3,6 +3,7 @@ import Link from "next/link";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { Archive, Clock, Crosshair, Crown } from "lucide-react";
 import { locales, type Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
@@ -51,18 +52,28 @@ export default async function LocaleLayout({
               </Link>
               <nav className="hidden md:flex items-center gap-1">
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/${locale}/regime-members`}>
+                  <Link href={`/${locale}/regime-members`} className="flex items-center gap-2">
+                    <Crosshair className="h-4 w-4" />
                     {t("regimeMembers")}
                   </Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/${locale}/victims`}>{t("victims")}</Link>
+                  <Link href={`/${locale}/victims`} className="flex items-center gap-2">
+                    <Crown className="h-4 w-4" />
+                    {t("victims")}
+                  </Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/${locale}/actions`}>{t("actions")}</Link>
+                  <Link href={`/${locale}/actions`} className="flex items-center gap-2">
+                    <Archive className="h-4 w-4" />
+                    {t("actions")}
+                  </Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/${locale}/pending`}>{t("pending")}</Link>
+                  <Link href={`/${locale}/pending`} className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    {t("pending")}
+                  </Link>
                 </Button>
               </nav>
             </div>

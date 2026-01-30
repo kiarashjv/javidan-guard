@@ -10,6 +10,7 @@
 - Favor small, focused modules with explicit types.
 - Use descriptive names and keep functions pure when possible.
 - Avoid hidden side effects; document non-obvious behavior.
+- Do not ignore TypeScript or lint errors.
 - Always run `pnpm check` and `pnpm lint` before reporting completion.
 
 ## Project Structure
