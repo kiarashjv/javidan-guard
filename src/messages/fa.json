@@ -256,5 +256,16 @@
       "victims": "قربانی",
       "actions": "اقدام"
     }
+  },
+  "table": {
+    "all": "همه",
+    "rowsPerPage": "تعداد در صفحه",
+    "noResults": "نتیجه‌ای یافت نشد",
+    "previous": "قبلی",
+    "next": "بعدی",
+    "status": "وضعیت",
+    "page": "صفحه {current} از {total}",
+    "results": "نمایش {from}–{to} از {total} نتیجه",
+    "resultsFiltered": "نمایش {from}–{to} از {filtered} نتیجه (از {total} نتیجه)"
   }
 }

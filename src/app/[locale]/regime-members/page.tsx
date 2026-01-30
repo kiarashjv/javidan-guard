@@ -29,6 +29,7 @@ export default function RegimeMembersPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("regimeMembers");
+  const table = useTranslations("table");
   const members = useQuery(api.regimeMembers.listCurrent, {});
   const createMember = useMutation(api.regimeMembers.create);
   const direction = locale === "fa" ? "rtl" : "ltr";
@@ -310,6 +311,7 @@ export default function RegimeMembersPage() {
           ]}
           searchPlaceholder={t("searchPlaceholder")}
           onRowClick={(member) => router.push(`/${locale}/regime-members/${member._id}`)}
+          direction={direction}
           showStatusFilter
           statusOptions={[
             { value: "active", label: t("status.active") },
@@ -318,6 +320,24 @@ export default function RegimeMembersPage() {
             { value: "deceased", label: t("status.deceased") },
             { value: "unknown", label: t("status.unknown") },
           ]}
+          filters={[
+            { key: "organization", label: t("form.organization") },
+            { key: "unit", label: t("form.unit") },
+            { key: "lastKnownLocation", label: t("form.location") },
+          ]}
+          labels={{
+            all: table("all"),
+            results: (from, to, filtered, total) =>
+              filtered === total
+                ? table("results", { from, to, total })
+                : table("resultsFiltered", { from, to, filtered, total }),
+            page: (current, total) => table("page", { current, total }),
+            rowsPerPage: table("rowsPerPage"),
+            noResults: table("noResults"),
+            previous: table("previous"),
+            next: table("next"),
+            status: table("status"),
+          }}
         />
       )}
     </section>

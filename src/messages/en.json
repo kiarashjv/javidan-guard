@@ -256,5 +256,16 @@
       "victims": "Victim",
       "actions": "Action"
     }
+  },
+  "table": {
+    "all": "All",
+    "rowsPerPage": "Rows per page",
+    "noResults": "No results found",
+    "previous": "Previous",
+    "next": "Next",
+    "status": "Status",
+    "page": "Page {current} of {total}",
+    "results": "Showing {from}-{to} of {total} results",
+    "resultsFiltered": "Showing {from}-{to} of {filtered} results (filtered from {total} total)"
   }
 }

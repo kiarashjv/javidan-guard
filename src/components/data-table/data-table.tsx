@@ -33,8 +33,30 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   onRowClick?: (item: T) => void;
   pageSize?: number;
+  pageSizeOptions?: number[];
   showStatusFilter?: boolean;
   statusOptions?: { value: string; label: string }[];
+  filters?: {
+    key: keyof T & string;
+    label: string;
+    options?: { value: string; label: string }[];
+  }[];
+  direction?: "rtl" | "ltr";
+  labels?: {
+    all: string;
+    results: (
+      from: number,
+      to: number,
+      filtered: number,
+      total: number,
+    ) => string;
+    page: (current: number, total: number) => string;
+    rowsPerPage: string;
+    noResults: string;
+    previous: string;
+    next: string;
+    status: string;
+  };
 }
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -43,14 +65,36 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder = "Search...",
   onRowClick,
   pageSize = 20,
+  pageSizeOptions = [10, 20, 50],
   showStatusFilter = false,
   statusOptions = [],
+  filters = [],
+  direction = "ltr",
+  labels = {
+    all: "All",
+    results: (from, to, filtered, total) =>
+      filtered === total
+        ? `Showing ${from}-${to} of ${total} results`
+        : `Showing ${from}-${to} of ${filtered} results (filtered from ${total} total)`,
+    page: (current, total) => `Page ${current} of ${total}`,
+    rowsPerPage: "Rows per page",
+    noResults: "No results found",
+    previous: "Previous",
+    next: "Next",
+    status: "Status",
+  },
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [sortKey, setSortKey] = React.useState<(keyof T & string) | null>(null);
-  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("asc");
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
+    "asc",
+  );
+  const [filterValues, setFilterValues] = React.useState<
+    Record<string, string>
+  >({});
+  const [pageSizeState, setPageSizeState] = React.useState(pageSize);
 
   // Filter data based on search and status
   const filteredData = React.useMemo(() => {
@@ -62,16 +106,27 @@ export function DataTable<T extends Record<string, unknown>>({
         Object.values(item).some(
           (value) =>
             value &&
-            value.toString().toLowerCase().includes(searchQuery.toLowerCase())
-        )
+            value.toString().toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
       );
     }
 
     // Apply status filter
     if (showStatusFilter && statusFilter !== "all") {
       filtered = filtered.filter(
-        (item) => (item as Record<string, unknown>).status === statusFilter
+        (item) => (item as Record<string, unknown>).status === statusFilter,
       );
+    }
+
+    // Apply additional filters
+    if (filters.length > 0) {
+      filters.forEach((filter) => {
+        const filterValue = filterValues[filter.key];
+        if (!filterValue || filterValue === "all") return;
+        filtered = filtered.filter(
+          (item) => String(item[filter.key] ?? "") === filterValue,
+        );
+      });
     }
 
     // Apply sorting
@@ -91,19 +146,31 @@ export function DataTable<T extends Record<string, unknown>>({
     }
 
     return filtered;
-  }, [data, searchQuery, statusFilter, sortKey, sortDirection, showStatusFilter]);
+  }, [
+    data,
+    searchQuery,
+    statusFilter,
+    sortKey,
+    sortDirection,
+    showStatusFilter,
+    filters,
+    filterValues,
+  ]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const totalPages = Math.ceil(filteredData.length / pageSizeState);
   const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    (currentPage - 1) * pageSizeState,
+    currentPage * pageSizeState,
   );
+  const rangeStart =
+    filteredData.length === 0 ? 0 : (currentPage - 1) * pageSizeState + 1;
+  const rangeEnd = Math.min(currentPage * pageSizeState, filteredData.length);
 
   // Reset to page 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, filterValues, pageSizeState]);
 
   const handleSort = (key: keyof T & string) => {
     if (sortKey === key) {
@@ -115,10 +182,10 @@ export function DataTable<T extends Record<string, unknown>>({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap items-end gap-1.5">
+        <div className="relative w-full sm:w-auto flex-auto">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
@@ -129,26 +196,91 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
 
         {showStatusFilter && statusOptions.length > 0 && (
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              {statusOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-full sm:max-w-35 sm:w-auto space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">
+              {labels.status}
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger
+                className={`min-w-30 ${
+                  direction === "rtl" ? "text-right flex-row-reverse" : ""
+                }`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                dir={direction}
+                className={direction === "rtl" ? "text-right" : ""}
+              >
+                <SelectItem value="all">{labels.all}</SelectItem>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
+        {filters.length > 0 &&
+          filters.map((filter) => {
+            const options =
+              filter.options ??
+              Array.from(
+                new Set(
+                  data
+                    .map((item) => item[filter.key])
+                    .filter((value) => value !== null && value !== undefined)
+                    .map((value) => String(value)),
+                ),
+              )
+                .sort((a, b) => a.localeCompare(b))
+                .map((value) => ({ value, label: value }));
+
+            return (
+              <div
+                key={filter.key}
+                className="w-full sm:max-w-37.5 sm:w-auto space-y-1"
+              >
+                <div className="text-xs font-medium text-muted-foreground">
+                  {filter.label}
+                </div>
+                <Select
+                  value={filterValues[filter.key] ?? "all"}
+                  onValueChange={(value) =>
+                    setFilterValues((prev) => ({
+                      ...prev,
+                      [filter.key]: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger
+                    className={`min-w-35 ${
+                      direction === "rtl" ? "text-right flex-row-reverse" : ""
+                    }`}
+                  >
+                    <SelectValue placeholder={filter.label} />
+                  </SelectTrigger>
+                  <SelectContent
+                    dir={direction}
+                    className={direction === "rtl" ? "text-right" : ""}
+                  >
+                    <SelectItem value="all">{labels.all}</SelectItem>
+                    {options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
       </div>
 
       {/* Results count */}
       <div className="text-sm text-muted-foreground">
-        Showing {paginatedData.length} of {filteredData.length} results
-        {filteredData.length !== data.length && ` (filtered from ${data.length} total)`}
+        {labels.results(rangeStart, rangeEnd, filteredData.length, data.length)}
       </div>
 
       {/* Table */}
@@ -159,7 +291,9 @@ export function DataTable<T extends Record<string, unknown>>({
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className={column.sortable ? "cursor-pointer select-none" : ""}
+                  className={
+                    column.sortable ? "cursor-pointer select-none" : ""
+                  }
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
                   <div className="flex items-center gap-2">
@@ -181,7 +315,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   colSpan={columns.length}
                   className="text-center py-12 text-muted-foreground"
                 >
-                  No results found
+                  {labels.noResults}
                 </TableCell>
               </TableRow>
             ) : (
@@ -193,7 +327,9 @@ export function DataTable<T extends Record<string, unknown>>({
                 >
                   {columns.map((column) => (
                     <TableCell key={column.key}>
-                      {column.render ? column.render(item) : formatCellValue(item[column.key])}
+                      {column.render
+                        ? column.render(item)
+                        : formatCellValue(item[column.key])}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -207,9 +343,36 @@ export function DataTable<T extends Record<string, unknown>>({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
+            {labels.page(currentPage, totalPages)}
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {labels.rowsPerPage}
+              </span>
+              <Select
+                value={String(pageSizeState)}
+                onValueChange={(value) => setPageSizeState(Number(value))}
+              >
+                <SelectTrigger
+                  className={`h-9 min-w-22 ${
+                    direction === "rtl" ? "text-right flex-row-reverse" : ""
+                  }`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  dir={direction}
+                  className={direction === "rtl" ? "text-right" : ""}
+                >
+                  {pageSizeOptions.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -217,7 +380,7 @@ export function DataTable<T extends Record<string, unknown>>({
               disabled={currentPage === 1}
             >
               <ChevronLeftIcon className="size-4" />
-              Previous
+              {labels.previous}
             </Button>
             <Button
               variant="outline"
@@ -225,7 +388,7 @@ export function DataTable<T extends Record<string, unknown>>({
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
-              Next
+              {labels.next}
               <ChevronRightIcon className="size-4" />
             </Button>
           </div>

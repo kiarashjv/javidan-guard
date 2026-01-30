@@ -34,6 +34,7 @@ export default function ActionsPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("actions");
+  const table = useTranslations("table");
   const actions = useQuery(api.actions.listCurrent, {});
   const createAction = useMutation(api.actions.create);
   const direction = locale === "fa" ? "rtl" : "ltr";
@@ -348,6 +349,7 @@ export default function ActionsPage() {
           ]}
           searchPlaceholder={t("searchPlaceholder")}
           onRowClick={(action) => router.push(`/${locale}/actions/${action._id}`)}
+          direction={direction}
           showStatusFilter
           statusOptions={[
             { value: "killing", label: t("types.killing") },
@@ -356,6 +358,20 @@ export default function ActionsPage() {
             { value: "assault", label: t("types.assault") },
             { value: "other", label: t("types.other") },
           ]}
+          filters={[{ key: "location", label: t("form.location") }]}
+          labels={{
+            all: table("all"),
+            results: (from, to, filtered, total) =>
+              filtered === total
+                ? table("results", { from, to, total })
+                : table("resultsFiltered", { from, to, filtered, total }),
+            page: (current, total) => table("page", { current, total }),
+            rowsPerPage: table("rowsPerPage"),
+            noResults: table("noResults"),
+            previous: table("previous"),
+            next: table("next"),
+            status: table("status"),
+          }}
         />
       )}
     </section>

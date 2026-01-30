@@ -35,6 +35,7 @@ export default function VictimsPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("victims");
+  const table = useTranslations("table");
   const victims = useQuery(api.victims.listCurrent, {});
   const createVictim = useMutation(api.victims.create);
   const direction = locale === "fa" ? "rtl" : "ltr";
@@ -386,6 +387,7 @@ export default function VictimsPage() {
           ]}
           searchPlaceholder={t("searchPlaceholder")}
           onRowClick={(victim) => router.push(`/${locale}/victims/${victim._id}`)}
+          direction={direction}
           showStatusFilter
           statusOptions={[
             { value: "murdered", label: t("status.murdered") },
@@ -394,6 +396,23 @@ export default function VictimsPage() {
             { value: "released", label: t("status.released") },
             { value: "confirmed_dead", label: t("status.confirmed_dead") },
           ]}
+          filters={[
+            { key: "hometown", label: t("form.hometown") },
+            { key: "incidentLocation", label: t("form.incidentLocation") },
+          ]}
+          labels={{
+            all: table("all"),
+            results: (from, to, filtered, total) =>
+              filtered === total
+                ? table("results", { from, to, total })
+                : table("resultsFiltered", { from, to, filtered, total }),
+            page: (current, total) => table("page", { current, total }),
+            rowsPerPage: table("rowsPerPage"),
+            noResults: table("noResults"),
+            previous: table("previous"),
+            next: table("next"),
+            status: table("status"),
+          }}
         />
       )}
     </section>
