@@ -59,6 +59,7 @@
     "title": "Regime member profile",
     "subtitle": "Review the profile details and propose updates.",
     "back": "Back to list",
+    "historyLink": "View history",
     "recordId": "Record ID",
     "location": "Last known location",
     "notes": "Evidence, history, and verification status will appear here.",
@@ -194,6 +195,7 @@
     "recordId": "Record ID",
     "hometown": "Hometown",
     "back": "Back to list",
+    "historyLink": "View history",
     "status": {
       "murdered": "Murdered",
       "captured": "Captured",
