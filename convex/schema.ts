@@ -93,6 +93,7 @@ export default defineSchema({
     requiredVerifications: v.number(),
     currentVerifications: v.number(),
     verifiedBySessions: v.array(v.string()),
+    rejectedBySessions: v.array(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("approved"),

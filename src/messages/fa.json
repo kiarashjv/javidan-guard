@@ -108,6 +108,10 @@
     "verifyShort": "تایید",
     "rejectShort": "رد",
     "fieldLocked": "برای این فیلد یک تغییر در انتظار است. برای ثبت جدید ابتدا آن را رد کنید.",
+    "youApproved": "شما این به‌روزرسانی را تایید کردید",
+    "youRejected": "شما این به‌روزرسانی را رد کردید",
+    "statusApproved": "تایید شد",
+    "statusRejected": "رد شد",
     "filters": {
       "regimeMembers": "مزدورها",
       "victims": "جاویدنامان",

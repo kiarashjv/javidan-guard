@@ -140,6 +140,7 @@ export const proposeUpdate = mutation({
       requiredVerifications,
       currentVerifications: 0,
       verifiedBySessions: [],
+      rejectedBySessions: [],
       status: "pending",
       proposedBy: args.proposedBy,
       proposedAt: now,
@@ -186,6 +187,9 @@ export const verifyUpdate = mutation({
 
     if (pendingUpdate.verifiedBySessions.includes(args.sessionId)) {
       throw new Error("Session has already verified this update.");
+    }
+    if (pendingUpdate.rejectedBySessions.includes(args.sessionId)) {
+      throw new Error("Session has already rejected this update.");
     }
 
     const updatedSessions = [
@@ -333,8 +337,24 @@ export const rejectUpdate = mutation({
       throw new Error("Pending update not found.");
     }
 
+    if (pendingUpdate.status !== "pending") {
+      throw new Error("Pending update is not active.");
+    }
+
+    if (pendingUpdate.verifiedBySessions.includes(args.sessionId)) {
+      throw new Error("Session has already verified this update.");
+    }
+
+    if (pendingUpdate.rejectedBySessions.includes(args.sessionId)) {
+      throw new Error("Session has already rejected this update.");
+    }
+
     await ctx.db.patch(args.pendingUpdateId, {
       status: "rejected",
+      rejectedBySessions: [
+        ...pendingUpdate.rejectedBySessions,
+        args.sessionId,
+      ],
     });
 
     await logAudit(ctx, {

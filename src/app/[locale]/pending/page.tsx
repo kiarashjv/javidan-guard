@@ -141,6 +141,9 @@ export default function PendingUpdatesPage() {
               targetHref={`/${locale}/${routeSegment}/${update.targetId}`}
               currentVerifications={update.currentVerifications}
               requiredVerifications={update.requiredVerifications}
+              status={update.status}
+              verifiedBySessions={update.verifiedBySessions}
+              rejectedBySessions={update.rejectedBySessions ?? []}
               fieldLabels={fieldLabels[collection]}
               formatValue={formatValue}
             />

@@ -113,6 +113,9 @@ export const api = {
         targetSnapshot?: string;
         requiredVerifications: number;
         currentVerifications: number;
+        status: "pending" | "approved" | "rejected" | "expired";
+        verifiedBySessions: string[];
+        rejectedBySessions: string[];
         proposedAt: number;
         expiresAt: number;
         reason: string;
@@ -166,6 +169,9 @@ export const api = {
         targetSnapshot?: string;
         requiredVerifications: number;
         currentVerifications: number;
+        status: "pending" | "approved" | "rejected" | "expired";
+        verifiedBySessions: string[];
+        rejectedBySessions: string[];
         proposedAt: number;
         expiresAt: number;
         reason: string;

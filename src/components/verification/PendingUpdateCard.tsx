@@ -34,6 +34,9 @@ export type PendingUpdateCardProps = {
   proposedChanges: string;
   currentVerifications: number;
   requiredVerifications: number;
+  status: "pending" | "approved" | "rejected" | "expired";
+  verifiedBySessions: string[];
+  rejectedBySessions: string[];
   proposedAt: number;
   expiresAt: number;
   reason?: string;
@@ -49,6 +52,9 @@ export function PendingUpdateCard({
   proposedChanges,
   currentVerifications,
   requiredVerifications,
+  status,
+  verifiedBySessions,
+  rejectedBySessions,
   proposedAt,
   expiresAt,
   reason,
@@ -64,6 +70,10 @@ export function PendingUpdateCard({
   const reject = useMutation(api.pendingUpdates.reject);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const sessionId = getSessionId();
+  const hasApproved = verifiedBySessions.includes(sessionId);
+  const hasRejected = rejectedBySessions.includes(sessionId);
+  const isFinalized = status !== "pending";
 
   const parsedChanges = useMemo(() => {
     try {
@@ -105,7 +115,6 @@ export function PendingUpdateCard({
   async function handleVerify() {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    const sessionId = getSessionId();
     const clientMeta = getClientMeta();
     await verify({
       pendingUpdateId: id,
@@ -119,7 +128,6 @@ export function PendingUpdateCard({
   async function handleReject() {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    const sessionId = getSessionId();
     const clientMeta = getClientMeta();
     await reject({
       pendingUpdateId: id,
@@ -149,6 +157,19 @@ export function PendingUpdateCard({
         <CardDescription>{t("proposedChanges")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
+        {isFinalized ? (
+          <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-600">
+            {status === "approved" ? t("statusApproved") : t("statusRejected")}
+          </div>
+        ) : hasApproved ? (
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
+            {t("youApproved")}
+          </div>
+        ) : hasRejected ? (
+          <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs text-rose-700">
+            {t("youRejected")}
+          </div>
+        ) : null}
         {reason ? (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
             <div className="text-xs text-zinc-500">{t("reason")}</div>
@@ -211,32 +232,36 @@ export function PendingUpdateCard({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={handleVerify} disabled={isSubmitting}>
-            {t("verify")}
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" disabled={isSubmitting}>
-                {t("reject")}
+          {!isFinalized && !hasApproved && !hasRejected ? (
+            <>
+              <Button onClick={handleVerify} disabled={isSubmitting}>
+                {t("verify")}
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("rejectTitle")}</AlertDialogTitle>
-              </AlertDialogHeader>
-              <Textarea
-                value={rejectReason}
-                onChange={(event) => setRejectReason(event.target.value)}
-                placeholder={t("rejectPlaceholder")}
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleReject}>
-                  {t("confirmReject")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" disabled={isSubmitting}>
+                    {t("reject")}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("rejectTitle")}</AlertDialogTitle>
+                  </AlertDialogHeader>
+                  <Textarea
+                    value={rejectReason}
+                    onChange={(event) => setRejectReason(event.target.value)}
+                    placeholder={t("rejectPlaceholder")}
+                  />
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReject}>
+                      {t("confirmReject")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          ) : null}
           {targetHref ? (
             <Button asChild variant="outline">
               <Link href={targetHref}>{t("viewTarget")}</Link>

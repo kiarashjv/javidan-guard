@@ -108,6 +108,10 @@
     "verifyShort": "Approve",
     "rejectShort": "Reject",
     "fieldLocked": "A pending change exists for this field. Reject it to propose a new one.",
+    "youApproved": "You approved this update",
+    "youRejected": "You rejected this update",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
     "filters": {
       "regimeMembers": "Mercenaries",
       "victims": "Victims",
