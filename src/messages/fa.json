@@ -85,6 +85,9 @@
     "empty": "موردی در انتظار نیست.",
     "verify": "تایید ویرایش",
     "proposedChanges": "تغییرات پیشنهادی",
+    "proposedAt": "ثبت شده در {date}",
+    "expiresAt": "انقضا در {date}",
+    "reason": "دلیل",
     "filters": {
       "regimeMembers": "اعضای رژیم",
       "victims": "قربانیان",

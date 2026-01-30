@@ -67,6 +67,9 @@ export default function PendingUpdatesPage() {
               id={update._id}
               targetLabel={t(`labels.${collection}`)}
               proposedChanges={update.proposedChanges}
+              proposedAt={update.proposedAt}
+              expiresAt={update.expiresAt}
+              reason={update.reason}
               targetSnapshot={update.targetSnapshot}
               targetHref={`/${locale}/${routeSegment}/${update.targetId}`}
               currentVerifications={update.currentVerifications}

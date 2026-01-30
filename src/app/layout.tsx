@@ -29,9 +29,6 @@ export const metadata: Metadata = {
   title: "Gard-e Javidan",
   description:
     "Public accountability archive for documenting regime members and victims with verification and audit logs.",
-  icons: {
-    icon: "/JAVID_SHAH.png",
-  },
 };
 
 export default async function RootLayout({

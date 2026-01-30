@@ -27,11 +27,12 @@ export const listPending = query({
     ),
   },
   handler: async (ctx, args) => {
-    return ctx.db
+    const pending = await ctx.db
       .query("pendingUpdates")
       .filter((q) => q.eq(q.field("targetCollection"), args.targetCollection))
       .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
+    return pending.sort((a, b) => b.proposedAt - a.proposedAt);
   },
 });
 
@@ -49,12 +50,13 @@ export const listPendingForTarget = query({
     ),
   },
   handler: async (ctx, args) => {
-    return ctx.db
+    const pending = await ctx.db
       .query("pendingUpdates")
       .filter((q) => q.eq(q.field("targetCollection"), args.targetCollection))
       .filter((q) => q.eq(q.field("targetId"), args.targetId))
       .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
+    return pending.sort((a, b) => b.proposedAt - a.proposedAt);
   },
 });
 

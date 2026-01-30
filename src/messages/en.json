@@ -85,6 +85,9 @@
     "empty": "No pending updates.",
     "verify": "Verify update",
     "proposedChanges": "Proposed changes",
+    "proposedAt": "Proposed {date}",
+    "expiresAt": "Expires {date}",
+    "reason": "Reason",
     "filters": {
       "regimeMembers": "Regime members",
       "victims": "Victims",

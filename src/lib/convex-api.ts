@@ -101,6 +101,9 @@ export const api = {
         targetSnapshot?: string;
         requiredVerifications: number;
         currentVerifications: number;
+        proposedAt: number;
+        expiresAt: number;
+        reason: string;
       }[]
     >("pendingUpdates:listPending"),
     propose: makeFunctionReference<
@@ -151,6 +154,9 @@ export const api = {
         targetSnapshot?: string;
         requiredVerifications: number;
         currentVerifications: number;
+        proposedAt: number;
+        expiresAt: number;
+        reason: string;
       }[]
     >("pendingUpdates:listPendingForTarget"),
   },

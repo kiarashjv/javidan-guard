@@ -236,6 +236,9 @@ export default function VictimDetailPage({
                 id={update._id}
                 targetLabel={t("pending.label")}
                 proposedChanges={update.proposedChanges}
+                proposedAt={update.proposedAt}
+                expiresAt={update.expiresAt}
+                reason={update.reason}
                 targetSnapshot={update.targetSnapshot}
                 currentVerifications={update.currentVerifications}
                 requiredVerifications={update.requiredVerifications}

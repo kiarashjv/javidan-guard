@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useMutation } from "convex/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,9 @@ export type PendingUpdateCardProps = {
   proposedChanges: string;
   currentVerifications: number;
   requiredVerifications: number;
+  proposedAt: number;
+  expiresAt: number;
+  reason?: string;
   targetSnapshot?: string | null;
   targetHref?: string;
 };
@@ -32,10 +35,14 @@ export function PendingUpdateCard({
   proposedChanges,
   currentVerifications,
   requiredVerifications,
+  proposedAt,
+  expiresAt,
+  reason,
   targetSnapshot,
   targetHref,
 }: PendingUpdateCardProps) {
   const t = useTranslations("pendingUpdates");
+  const locale = useLocale();
   const verify = useMutation(api.pendingUpdates.verify);
 
   const parsedChanges = useMemo(() => {
@@ -57,6 +64,24 @@ export function PendingUpdateCard({
     }
   }, [targetSnapshot]);
 
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
+    [locale]
+  );
+
+  const proposedLabel = dateFormatter.format(new Date(proposedAt));
+  const expiresLabel = dateFormatter.format(new Date(expiresAt));
+
+  const fieldLabel = (key: string) =>
+    key
+      .replace(/[_-]/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
   async function handleVerify() {
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
@@ -77,16 +102,30 @@ export function PendingUpdateCard({
             {currentVerifications}/{requiredVerifications}
           </Badge>
         </div>
+        <CardDescription className="flex flex-wrap gap-2 text-xs text-zinc-500">
+          <span>{t("proposedAt", { date: proposedLabel })}</span>
+          <span>•</span>
+          <span>{t("expiresAt", { date: expiresLabel })}</span>
+        </CardDescription>
         <CardDescription>{t("proposedChanges")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
+        {reason ? (
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <div className="text-xs text-zinc-500">{t("reason")}</div>
+            <div className="text-sm text-zinc-800">{reason}</div>
+          </div>
+        ) : null}
         <div className="space-y-2">
           {Object.entries(parsedChanges).map(([key, value]) => {
             const currentValue = parsedSnapshot[key];
             return (
-              <div key={key} className="grid gap-2 rounded-lg border border-zinc-200 p-3">
-                <div className="text-xs uppercase tracking-wide text-zinc-400">
-                  {key}
+              <div
+                key={key}
+                className="grid gap-2 rounded-lg border border-zinc-200 p-3"
+              >
+                <div className="text-xs font-medium text-zinc-500">
+                  {fieldLabel(key)}
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   <div>
