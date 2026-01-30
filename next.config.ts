@@ -3,10 +3,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n.ts");
 
-const isDev = process.env.NODE_ENV !== "production";
-const scriptSrc = isDev
-  ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'; "
-  : "script-src 'self' 'unsafe-eval'; ";
+const scriptSrc = "script-src 'self' 'unsafe-eval' 'unsafe-inline'; ";
 
 const securityHeaders = [
   {
