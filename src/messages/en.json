@@ -1,7 +1,7 @@
 {
   "home": {
     "title": "Gard-e Javidan",
-    "subtitle": "A public, verification-based archive for documenting regime members and victims.",
+    "subtitle": "A public, verification-based archive for documenting mercenaries and victims.",
     "ctaPrimary": "Report a case",
     "ctaSecondary": "Browse records"
   },
@@ -9,7 +9,7 @@
     "brandName": "Gard-e Javidan",
     "brandTagline": "Documentation & Verification System",
     "language": "Language",
-    "regimeMembers": "Regime members",
+    "regimeMembers": "Mercenaries",
     "victims": "Victims",
     "actions": "Actions",
     "pending": "Pending updates"
@@ -19,7 +19,7 @@
     "validationDescription": "Some required fields are missing or invalid."
   },
   "regimeMembers": {
-    "title": "Regime members",
+    "title": "Mercenaries",
     "subtitle": "Document officials, units, and identities with evidence and verification.",
     "searchPlaceholder": "Search by name, unit, or location",
     "ctaReport": "Report a member",
@@ -36,7 +36,7 @@
       "unknown": "Unknown"
     },
     "form": {
-      "title": "Report a regime member",
+      "title": "Report a mercenary",
       "subtitle": "Provide only verified information and evidence.",
       "name": "Full name",
       "organization": "Organization",
@@ -56,7 +56,7 @@
     }
   },
   "regimeMember": {
-    "title": "Regime member profile",
+    "title": "Mercenary profile",
     "subtitle": "Review the profile details and propose updates.",
     "back": "Back to list",
     "historyLink": "View history",
@@ -109,12 +109,12 @@
     "rejectShort": "Reject",
     "fieldLocked": "A pending change exists for this field. Reject it to propose a new one.",
     "filters": {
-      "regimeMembers": "Regime members",
+      "regimeMembers": "Mercenaries",
       "victims": "Victims",
       "actions": "Actions"
     },
     "labels": {
-      "regimeMembers": "Regime member",
+      "regimeMembers": "Mercenary",
       "victims": "Victim",
       "actions": "Action"
     },
@@ -125,7 +125,7 @@
   },
   "actions": {
     "title": "Actions & incidents",
-    "subtitle": "Document incidents linked to regime members and victims.",
+    "subtitle": "Document incidents linked to mercenaries and victims.",
     "loading": "Loading actions...",
     "empty": "No actions yet.",
     "view": "View action",
@@ -290,7 +290,7 @@
     "newUpdates": "New updates available.",
     "showNew": "Show",
     "types": {
-      "regimeMembers": "Regime member",
+      "regimeMembers": "Mercenary",
       "victims": "Victim",
       "actions": "Action"
     }
@@ -308,7 +308,7 @@
   },
   "footer": {
     "about": "About",
-    "mission": "A public, verification-based archive documenting regime members and victims of the Iranian revolution. We preserve historical truth through community verification and evidence-based records.",
+    "mission": "A public, verification-based archive documenting mercenaries and victims of the Iranian revolution. We preserve historical truth through community verification and evidence-based records.",
     "quickLinks": "Quick links",
     "support": "Support",
     "donate": "Donate",
