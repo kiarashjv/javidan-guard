@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useMutation } from "convex/react";
@@ -66,9 +67,9 @@ export function PendingUpdateCard({
 
   const parsedChanges = useMemo(() => {
     try {
-      return JSON.parse(proposedChanges) as Record<string, string>;
+      return JSON.parse(proposedChanges) as Record<string, unknown>;
     } catch {
-      return {} as Record<string, string>;
+      return {} as Record<string, unknown>;
     }
   }, [proposedChanges]);
 
@@ -167,15 +168,16 @@ export function PendingUpdateCard({
           <div className="divide-y divide-zinc-200">
             {Object.entries(parsedChanges).map(([key, value]) => {
               const currentValue = parsedSnapshot[key];
-              const currentText = currentValue ? String(currentValue) : t("unknown");
-              const proposedText = String(value);
+              const currentText = formatDisplayValue(key, currentValue, formatValue, t);
+              const proposedText = formatDisplayValue(key, value, formatValue, t);
               const hasChanged = currentText !== proposedText;
+              const isPhotoField = key === "photoUrls";
               const label = fieldLabels?.[key] ?? fieldLabel(key);
-              const formattedCurrent = formatValue
-                ? formatValue(key, currentText)
+              const currentDisplay = isPhotoField
+                ? renderPhotoGrid(normalizePhotoUrls(currentValue), t("unknown"))
                 : currentText;
-              const formattedProposed = formatValue
-                ? formatValue(key, proposedText)
+              const proposedDisplay = isPhotoField
+                ? renderPhotoGrid(normalizePhotoUrls(value), t("unknown"))
                 : proposedText;
               return (
                 <div
@@ -187,7 +189,7 @@ export function PendingUpdateCard({
                   <div className="font-medium text-zinc-600">{label}</div>
                   <div className="text-zinc-700">
                     <div className="text-[10px] text-zinc-500 md:hidden">{t("current")}</div>
-                    {formattedCurrent}
+                    {currentDisplay}
                   </div>
                   <div
                     className={`font-medium ${
@@ -201,7 +203,7 @@ export function PendingUpdateCard({
                     >
                       {t("proposed")}
                     </div>
-                    {formattedProposed}
+                    {proposedDisplay}
                   </div>
                 </div>
               );
@@ -243,5 +245,55 @@ export function PendingUpdateCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function normalizePhotoUrls(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [] as string[];
+}
+
+function formatDisplayValue(
+  key: string,
+  value: unknown,
+  formatValue: ((key: string, value: string) => string) | undefined,
+  t: (key: string) => string
+) {
+  if (value === null || value === undefined || value === "") {
+    return t("unknown");
+  }
+  if (formatValue && typeof value === "string") {
+    return formatValue(key, value);
+  }
+  return Array.isArray(value) ? value.join(", ") : String(value);
+}
+
+function renderPhotoGrid(urls: string[], fallback: string) {
+  if (urls.length === 0) {
+    return <span className="text-zinc-500">{fallback}</span>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {urls.map((url) => (
+        <div key={url} className="h-12 w-12 overflow-hidden rounded-md border border-zinc-200">
+          <Image
+            src={url}
+            alt=""
+            width={96}
+            height={96}
+            className="h-full w-full object-cover"
+            unoptimized
+          />
+        </div>
+      ))}
+    </div>
   );
 }

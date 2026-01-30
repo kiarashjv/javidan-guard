@@ -473,6 +473,7 @@ iran-revolution-platform/
 4. Timeline of changes
 5. Connection between perpetrators and victims
 6. Translated status indicators and labels
+7. Verification UX guardrails: hide verify/reject after a user has voted; show clear status messaging; enforce duplicate-vote prevention
 
 ### Phase 4: Backup & Security
 1. Implement automated backups (15-minute cron)

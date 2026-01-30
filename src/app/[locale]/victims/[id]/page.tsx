@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -34,6 +35,8 @@ export default function VictimDetailPage({
   const pendingT = useTranslations("pendingUpdates");
   const victim = useQuery(api.victims.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const getUploadUrl = useMutation(api.files.getUrl);
   const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
     targetCollection: "victims",
     targetId: id,
@@ -43,14 +46,14 @@ export default function VictimDetailPage({
     if (!pendingUpdates) {
       return {} as Record<
         string,
-        { update: PendingUpdateRecord; proposedValue: string }
+        { update: PendingUpdateRecord; proposedValue: unknown }
       >;
     }
-    const result: Record<string, { update: PendingUpdateRecord; proposedValue: string }> = {};
+    const result: Record<string, { update: PendingUpdateRecord; proposedValue: unknown }> = {};
     for (const update of pendingUpdates) {
-      let parsed: Record<string, string>;
+      let parsed: Record<string, unknown>;
       try {
-        parsed = JSON.parse(update.proposedChanges) as Record<string, string>;
+        parsed = JSON.parse(update.proposedChanges) as Record<string, unknown>;
       } catch {
         continue;
       }
@@ -79,9 +82,12 @@ export default function VictimDetailPage({
     incidentDate: "",
     incidentLocation: "",
     circumstances: "",
+    photoUrls: "",
     reason: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function handlePropose(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -89,9 +95,29 @@ export default function VictimDetailPage({
       return;
     }
 
-    const proposedChanges = Object.fromEntries(
-      Object.entries(formState).filter(([key, value]) => key !== "reason" && value.trim().length > 0)
-    ) as Record<string, string>;
+    const proposedChanges: Record<string, unknown> = {};
+    if (formState.name.trim().length > 0) proposedChanges.name = formState.name.trim();
+    if (formState.hometown.trim().length > 0) {
+      proposedChanges.hometown = formState.hometown.trim();
+    }
+    if (formState.status.trim().length > 0) {
+      proposedChanges.status = formState.status.trim();
+    }
+    if (formState.incidentDate.trim().length > 0) {
+      proposedChanges.incidentDate = formState.incidentDate.trim();
+    }
+    if (formState.incidentLocation.trim().length > 0) {
+      proposedChanges.incidentLocation = formState.incidentLocation.trim();
+    }
+    if (formState.circumstances.trim().length > 0) {
+      proposedChanges.circumstances = formState.circumstances.trim();
+    }
+    if (formState.photoUrls.trim().length > 0) {
+      proposedChanges.photoUrls = formState.photoUrls
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+    }
 
     if (Object.keys(proposedChanges).length === 0) {
       return;
@@ -118,9 +144,58 @@ export default function VictimDetailPage({
       incidentDate: "",
       incidentLocation: "",
       circumstances: "",
+      photoUrls: "",
       reason: "",
     });
     setIsSubmitting(false);
+  }
+
+  async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const uploadUrl = await generateUploadUrl({});
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!result.ok) {
+          throw new Error("Upload failed.");
+        }
+
+        const { storageId } = (await result.json()) as { storageId: string };
+        const resolvedUrl = await getUploadUrl({ storageId });
+        if (resolvedUrl) {
+          uploadedUrls.push(resolvedUrl);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormState((prev) => {
+          const existing = prev.photoUrls.trim();
+          const combined = existing.length
+            ? `${existing}, ${uploadedUrls.join(", ")}`
+            : uploadedUrls.join(", ");
+          return { ...prev, photoUrls: combined };
+        });
+      }
+      event.target.value = "";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setUploadError(message);
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   if (victim === undefined) {
@@ -157,6 +232,25 @@ export default function VictimDetailPage({
           <div>
             {t("recordId")}: {victim._id}
           </div>
+          {victim.photoUrls?.length ? (
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{victimsT("form.photos")}</div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {victim.photoUrls.map((url) => (
+                  <div key={url} className="overflow-hidden rounded-lg border border-zinc-200">
+                    <Image
+                      src={url}
+                      alt={victim.name}
+                      width={640}
+                      height={360}
+                      className="h-40 w-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground">{victimsT("form.name")}</div>
@@ -164,7 +258,7 @@ export default function VictimDetailPage({
               {pendingByField.name ? (
                 <PendingFieldUpdate
                   update={pendingByField.name.update}
-                  proposedValue={pendingByField.name.proposedValue}
+                  proposedValue={String(pendingByField.name.proposedValue)}
                 />
               ) : null}
             </div>
@@ -174,7 +268,7 @@ export default function VictimDetailPage({
               {pendingByField.status ? (
                 <PendingFieldUpdate
                   update={pendingByField.status.update}
-                  proposedValue={pendingByField.status.proposedValue}
+                  proposedValue={String(pendingByField.status.proposedValue)}
                 />
               ) : null}
             </div>
@@ -184,7 +278,7 @@ export default function VictimDetailPage({
               {pendingByField.hometown ? (
                 <PendingFieldUpdate
                   update={pendingByField.hometown.update}
-                  proposedValue={pendingByField.hometown.proposedValue}
+                  proposedValue={String(pendingByField.hometown.proposedValue)}
                 />
               ) : null}
             </div>
@@ -196,7 +290,7 @@ export default function VictimDetailPage({
               {pendingByField.incidentDate ? (
                 <PendingFieldUpdate
                   update={pendingByField.incidentDate.update}
-                  proposedValue={pendingByField.incidentDate.proposedValue}
+                  proposedValue={String(pendingByField.incidentDate.proposedValue)}
                 />
               ) : null}
             </div>
@@ -208,7 +302,7 @@ export default function VictimDetailPage({
               {pendingByField.incidentLocation ? (
                 <PendingFieldUpdate
                   update={pendingByField.incidentLocation.update}
-                  proposedValue={pendingByField.incidentLocation.proposedValue}
+                  proposedValue={String(pendingByField.incidentLocation.proposedValue)}
                 />
               ) : null}
             </div>
@@ -220,10 +314,36 @@ export default function VictimDetailPage({
               {pendingByField.circumstances ? (
                 <PendingFieldUpdate
                   update={pendingByField.circumstances.update}
-                  proposedValue={pendingByField.circumstances.proposedValue}
+                  proposedValue={String(pendingByField.circumstances.proposedValue)}
                 />
               ) : null}
             </div>
+            {pendingByField.photoUrls ? (
+              <div className="space-y-2 md:col-span-2">
+                <div className="text-xs text-muted-foreground">
+                  {pendingT("fieldPending")} · {victimsT("form.photos")}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {normalizePhotoUrls(pendingByField.photoUrls.proposedValue).map(
+                    (url) => (
+                      <div
+                        key={url}
+                        className="overflow-hidden rounded-lg border border-amber-200"
+                      >
+                        <Image
+                          src={url}
+                          alt={victim.name}
+                          width={640}
+                          height={360}
+                          className="h-40 w-full object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -340,6 +460,34 @@ export default function VictimDetailPage({
                   <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
                 ) : null}
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="update-victim-photos">{victimsT("form.photos")}</Label>
+                <Input
+                  id="update-victim-photos"
+                  value={formState.photoUrls}
+                  disabled={isFieldPending("photoUrls")}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, photoUrls: event.target.value }))
+                  }
+                />
+                <Input
+                  id="update-victim-photo-upload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  disabled={isUploading || isFieldPending("photoUrls")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {isUploading ? victimsT("form.uploading") : victimsT("form.uploadPhotos")}
+                </p>
+                {isFieldPending("photoUrls") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
+                {uploadError ? (
+                  <p className="text-xs text-destructive">{uploadError}</p>
+                ) : null}
+              </div>
             </div>
             <Separator />
             <div className="space-y-2">
@@ -372,3 +520,16 @@ type PendingUpdateRecord = {
   requiredVerifications: number;
   reason?: string | null;
 };
+
+function normalizePhotoUrls(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [] as string[];
+}

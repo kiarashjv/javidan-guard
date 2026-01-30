@@ -15,7 +15,7 @@ const securityHeaders = [
       "default-src 'self'; " +
       scriptSrc +
       "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: blob:; " +
+      "img-src 'self' data: blob: https://*.convex.cloud; " +
       "font-src 'self' data:; " +
       "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud; " +
       "frame-ancestors 'none'; " +

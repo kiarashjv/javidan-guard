@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -34,6 +35,8 @@ export default function RegimeMemberDetailPage({
   const pendingT = useTranslations("pendingUpdates");
   const member = useQuery(api.regimeMembers.getById, { id });
   const proposeUpdate = useMutation(api.pendingUpdates.propose);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const getUploadUrl = useMutation(api.files.getUrl);
   const pendingUpdates = useQuery(api.pendingUpdates.listForTarget, {
     targetCollection: "regimeMembers",
     targetId: id,
@@ -43,14 +46,14 @@ export default function RegimeMemberDetailPage({
     if (!pendingUpdates) {
       return {} as Record<
         string,
-        { update: PendingUpdateRecord; proposedValue: string }
+        { update: PendingUpdateRecord; proposedValue: unknown }
       >;
     }
-    const result: Record<string, { update: PendingUpdateRecord; proposedValue: string }> = {};
+    const result: Record<string, { update: PendingUpdateRecord; proposedValue: unknown }> = {};
     for (const update of pendingUpdates) {
-      let parsed: Record<string, string>;
+      let parsed: Record<string, unknown>;
       try {
-        parsed = JSON.parse(update.proposedChanges) as Record<string, string>;
+        parsed = JSON.parse(update.proposedChanges) as Record<string, unknown>;
       } catch {
         continue;
       }
@@ -75,9 +78,12 @@ export default function RegimeMemberDetailPage({
     rank: "",
     status: "",
     lastKnownLocation: "",
+    photoUrls: "",
     reason: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function handlePropose(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,9 +91,32 @@ export default function RegimeMemberDetailPage({
       return;
     }
 
-    const proposedChanges = Object.fromEntries(
-      Object.entries(formState).filter(([key, value]) => key !== "reason" && value.trim().length > 0)
-    ) as Record<string, string>;
+    const proposedChanges: Record<string, unknown> = {};
+    if (formState.name.trim().length > 0) proposedChanges.name = formState.name.trim();
+    if (formState.organization.trim().length > 0) {
+      proposedChanges.organization = formState.organization.trim();
+    }
+    if (formState.unit.trim().length > 0) {
+      proposedChanges.unit = formState.unit.trim();
+    }
+    if (formState.position.trim().length > 0) {
+      proposedChanges.position = formState.position.trim();
+    }
+    if (formState.rank.trim().length > 0) {
+      proposedChanges.rank = formState.rank.trim();
+    }
+    if (formState.status.trim().length > 0) {
+      proposedChanges.status = formState.status.trim();
+    }
+    if (formState.lastKnownLocation.trim().length > 0) {
+      proposedChanges.lastKnownLocation = formState.lastKnownLocation.trim();
+    }
+    if (formState.photoUrls.trim().length > 0) {
+      proposedChanges.photoUrls = formState.photoUrls
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+    }
 
     if (Object.keys(proposedChanges).length === 0) {
       return;
@@ -115,9 +144,58 @@ export default function RegimeMemberDetailPage({
       rank: "",
       status: "",
       lastKnownLocation: "",
+      photoUrls: "",
       reason: "",
     });
     setIsSubmitting(false);
+  }
+
+  async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const uploadUrl = await generateUploadUrl({});
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!result.ok) {
+          throw new Error("Upload failed.");
+        }
+
+        const { storageId } = (await result.json()) as { storageId: string };
+        const resolvedUrl = await getUploadUrl({ storageId });
+        if (resolvedUrl) {
+          uploadedUrls.push(resolvedUrl);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormState((prev) => {
+          const existing = prev.photoUrls.trim();
+          const combined = existing.length
+            ? `${existing}, ${uploadedUrls.join(", ")}`
+            : uploadedUrls.join(", ");
+          return { ...prev, photoUrls: combined };
+        });
+      }
+      event.target.value = "";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setUploadError(message);
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   if (member === undefined) {
@@ -156,6 +234,25 @@ export default function RegimeMemberDetailPage({
           <div>
             {t("recordId")}: {member._id}
           </div>
+          {member.photoUrls?.length ? (
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">{membersT("form.photos")}</div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {member.photoUrls.map((url) => (
+                  <div key={url} className="overflow-hidden rounded-lg border border-zinc-200">
+                    <Image
+                      src={url}
+                      alt={member.name}
+                      width={640}
+                      height={360}
+                      className="h-40 w-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground">{membersT("form.name")}</div>
@@ -163,7 +260,7 @@ export default function RegimeMemberDetailPage({
               {pendingByField.name ? (
                 <PendingFieldUpdate
                   update={pendingByField.name.update}
-                  proposedValue={pendingByField.name.proposedValue}
+                  proposedValue={String(pendingByField.name.proposedValue)}
                 />
               ) : null}
             </div>
@@ -177,7 +274,7 @@ export default function RegimeMemberDetailPage({
               {pendingByField.status ? (
                 <PendingFieldUpdate
                   update={pendingByField.status.update}
-                  proposedValue={pendingByField.status.proposedValue}
+                  proposedValue={String(pendingByField.status.proposedValue)}
                 />
               ) : null}
             </div>
@@ -189,7 +286,7 @@ export default function RegimeMemberDetailPage({
               {pendingByField.organization ? (
                 <PendingFieldUpdate
                   update={pendingByField.organization.update}
-                  proposedValue={pendingByField.organization.proposedValue}
+                  proposedValue={String(pendingByField.organization.proposedValue)}
                 />
               ) : null}
             </div>
@@ -199,7 +296,7 @@ export default function RegimeMemberDetailPage({
               {pendingByField.unit ? (
                 <PendingFieldUpdate
                   update={pendingByField.unit.update}
-                  proposedValue={pendingByField.unit.proposedValue}
+                  proposedValue={String(pendingByField.unit.proposedValue)}
                 />
               ) : null}
             </div>
@@ -211,7 +308,7 @@ export default function RegimeMemberDetailPage({
               {pendingByField.position ? (
                 <PendingFieldUpdate
                   update={pendingByField.position.update}
-                  proposedValue={pendingByField.position.proposedValue}
+                  proposedValue={String(pendingByField.position.proposedValue)}
                 />
               ) : null}
             </div>
@@ -221,7 +318,7 @@ export default function RegimeMemberDetailPage({
               {pendingByField.rank ? (
                 <PendingFieldUpdate
                   update={pendingByField.rank.update}
-                  proposedValue={pendingByField.rank.proposedValue}
+                  proposedValue={String(pendingByField.rank.proposedValue)}
                 />
               ) : null}
             </div>
@@ -233,10 +330,36 @@ export default function RegimeMemberDetailPage({
               {pendingByField.lastKnownLocation ? (
                 <PendingFieldUpdate
                   update={pendingByField.lastKnownLocation.update}
-                  proposedValue={pendingByField.lastKnownLocation.proposedValue}
+                  proposedValue={String(pendingByField.lastKnownLocation.proposedValue)}
                 />
               ) : null}
             </div>
+            {pendingByField.photoUrls ? (
+              <div className="space-y-2 md:col-span-2">
+                <div className="text-xs text-muted-foreground">
+                  {pendingT("fieldPending")} · {membersT("form.photos")}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {normalizePhotoUrls(pendingByField.photoUrls.proposedValue).map(
+                    (url) => (
+                      <div
+                        key={url}
+                        className="overflow-hidden rounded-lg border border-amber-200"
+                      >
+                        <Image
+                          src={url}
+                          alt={member.name}
+                          width={640}
+                          height={360}
+                          className="h-40 w-full object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div>{t("notes")}</div>
         </CardContent>
@@ -357,6 +480,34 @@ export default function RegimeMemberDetailPage({
                   <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
                 ) : null}
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="update-photos">{membersT("form.photos")}</Label>
+                <Input
+                  id="update-photos"
+                  value={formState.photoUrls}
+                  disabled={isFieldPending("photoUrls")}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, photoUrls: event.target.value }))
+                  }
+                />
+                <Input
+                  id="update-photo-upload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  disabled={isUploading || isFieldPending("photoUrls")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {isUploading ? membersT("form.uploading") : membersT("form.uploadPhotos")}
+                </p>
+                {isFieldPending("photoUrls") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
+                {uploadError ? (
+                  <p className="text-xs text-destructive">{uploadError}</p>
+                ) : null}
+              </div>
             </div>
             <Separator />
             <div className="space-y-2">
@@ -388,3 +539,16 @@ type PendingUpdateRecord = {
   requiredVerifications: number;
   reason?: string | null;
 };
+
+function normalizePhotoUrls(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [] as string[];
+}

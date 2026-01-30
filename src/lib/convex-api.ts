@@ -230,4 +230,16 @@ export const api = {
       }[]
     >("recent:feed"),
   },
+  files: {
+    generateUploadUrl: makeFunctionReference<
+      "mutation",
+      Record<string, never>,
+      string
+    >("files:generateUploadUrl"),
+    getUrl: makeFunctionReference<
+      "mutation",
+      { storageId: string },
+      string | null
+    >("files:getUrl"),
+  },
 } as const;

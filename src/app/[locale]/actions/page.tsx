@@ -37,6 +37,8 @@ export default function ActionsPage() {
   const table = useTranslations("table");
   const actions = useQuery(api.actions.listCurrent, {});
   const createAction = useMutation(api.actions.create);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const getUploadUrl = useMutation(api.files.getUrl);
   const direction = locale === "fa" ? "rtl" : "ltr";
   const actionRows = useMemo(() => (actions ?? []) as ActionRow[], [actions]);
 
@@ -55,6 +57,8 @@ export default function ActionsPage() {
     reason: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const canSubmit = useMemo(() => {
     return (
       formState.actionType.length > 0 &&
@@ -64,6 +68,54 @@ export default function ActionsPage() {
       formState.reason.trim().length > 3
     );
   }, [formState]);
+
+  async function handleEvidenceUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const uploadUrl = await generateUploadUrl({});
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!result.ok) {
+          throw new Error("Upload failed.");
+        }
+
+        const { storageId } = (await result.json()) as { storageId: string };
+        const resolvedUrl = await getUploadUrl({ storageId });
+        if (resolvedUrl) {
+          uploadedUrls.push(resolvedUrl);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormState((prev) => {
+          const existing = prev.evidenceUrls.trim();
+          const combined = existing.length
+            ? `${existing}, ${uploadedUrls.join(", ")}`
+            : uploadedUrls.join(", ");
+          return { ...prev, evidenceUrls: combined };
+        });
+      }
+      event.target.value = "";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setUploadError(message);
+    } finally {
+      setIsUploading(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -242,6 +294,19 @@ export default function ActionsPage() {
                     }))
                   }
                 />
+                <Input
+                  id="action-evidence-upload"
+                  type="file"
+                  multiple
+                  onChange={handleEvidenceUpload}
+                  disabled={isUploading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {isUploading ? t("form.uploading") : t("form.uploadEvidence")}
+                </p>
+                {uploadError ? (
+                  <p className="text-xs text-destructive">{uploadError}</p>
+                ) : null}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="action-videos">{t("form.videoLinks")}</Label>
