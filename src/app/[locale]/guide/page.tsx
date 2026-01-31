@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 
 export default function GuidePage() {
@@ -55,6 +56,24 @@ export default function GuidePage() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">{t("sections.safety.title")}</h2>
           <p className="text-muted-foreground">{t("sections.safety.body")}</p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">{t("links.title")}</h2>
+          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+            <Link
+              href={`/${locale}/privacy`}
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              {t("links.privacy")}
+            </Link>
+            <Link
+              href={`/${locale}/terms`}
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              {t("links.terms")}
+            </Link>
+          </div>
         </section>
       </div>
     </section>

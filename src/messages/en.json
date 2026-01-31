@@ -494,6 +494,11 @@
         "title": "Safety",
         "body": "Avoid sharing personal identifying information about contributors. Use this platform responsibly."
       }
+    },
+    "links": {
+      "title": "Read more",
+      "privacy": "Privacy policy",
+      "terms": "Terms of use"
     }
   },
   "errors": {
