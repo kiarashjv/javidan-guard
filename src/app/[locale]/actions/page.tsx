@@ -192,6 +192,7 @@ export default function ActionsPage() {
               previous: table("previous"),
               next: table("next"),
               status: table("status"),
+              filters: table("filters"),
             }}
           pagination={{
             pageIndex,

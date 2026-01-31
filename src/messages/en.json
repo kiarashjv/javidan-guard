@@ -361,6 +361,7 @@
     "previous": "Previous",
     "next": "Next",
     "status": "Status",
+    "filters": "Filters",
     "resultsPage": "Showing {from}-{to}",
     "resultsFilteredPage": "Showing {from}-{to} of {filtered} results",
     "pageCurrent": "Page {current}",

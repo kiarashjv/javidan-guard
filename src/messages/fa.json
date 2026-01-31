@@ -361,6 +361,7 @@
     "previous": "قبلی",
     "next": "بعدی",
     "status": "وضعیت",
+    "filters": "فیلترها",
     "resultsPage": "نمایش {from}–{to}",
     "resultsFilteredPage": "نمایش {from}–{to} از {filtered} نتیجه",
     "pageCurrent": "صفحه {current}",

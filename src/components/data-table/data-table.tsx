@@ -17,7 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SearchIcon } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { FilterIcon, SearchIcon } from "lucide-react";
 
 interface Column<T> {
   key: keyof T & string;
@@ -78,6 +87,7 @@ interface DataTableProps<T> {
     previous: string;
     next: string;
     status: string;
+    filters?: string;
   };
 }
 
@@ -118,6 +128,7 @@ export function DataTable<T extends Record<string, unknown>>({
     previous: "Previous",
     next: "Next",
     status: "Status",
+    filters: "Filters",
   },
 }: DataTableProps<T>) {
   const [localSearchQuery, setLocalSearchQuery] = React.useState("");
@@ -229,11 +240,62 @@ export function DataTable<T extends Record<string, unknown>>({
     }
   };
 
+  // Count active filters
+  const activeFilterCount = React.useMemo(() => {
+    let count = 0;
+    if (statusFilter !== "all") count++;
+    Object.values(filterValues).forEach((value) => {
+      if (value && value !== "all") count++;
+    });
+    return count;
+  }, [statusFilter, filterValues]);
+
+  // Render filter select component
+  const renderFilterSelect = (
+    filterKey: string,
+    filterLabel: string,
+    options: { value: string; label: string }[],
+    value: string,
+    onValueChange: (value: string) => void,
+    showLabel = true,
+  ) => (
+    <div key={filterKey} className="space-y-1.5">
+      {showLabel && (
+        <div className="text-xs font-medium text-muted-foreground">
+          {filterLabel}
+        </div>
+      )}
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger
+          className={
+            direction === "rtl" ? "text-right flex-row-reverse" : ""
+          }
+        >
+          <SelectValue placeholder={filterLabel} />
+        </SelectTrigger>
+        <SelectContent
+          dir={direction}
+          className={direction === "rtl" ? "text-right" : ""}
+        >
+          <SelectItem value="all">{labels.all}</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const hasFilters = showStatusFilter || filters.length > 0;
+
   return (
     <div className="space-y-3">
       {/* Search and Filters */}
-      <div className="flex flex-wrap items-end gap-1.5">
-        <div className="relative w-full sm:w-auto flex-auto">
+      <div className="flex items-center gap-2">
+        {/* Search - always visible */}
+        <div className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
@@ -250,41 +312,134 @@ export function DataTable<T extends Record<string, unknown>>({
           />
         </div>
 
-        {showStatusFilter && statusOptions.length > 0 && (
-          <div className="w-full sm:max-w-35 sm:w-auto space-y-1">
-            <div className="text-xs font-medium text-muted-foreground">
-              {labels.status}
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
+        {/* Mobile Filter Button */}
+        {hasFilters && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="default" className="sm:hidden relative">
+                <FilterIcon className="size-4" />
+                {activeFilterCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto" dir={direction}>
+              <SheetHeader>
+                <SheetTitle>{labels.filters}</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-4 p-6 pt-4">
+                {/* Status filter in mobile sheet */}
+                {showStatusFilter && statusOptions.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">{labels.status}</div>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(value) => {
+                        setStatusFilter(value);
+                        onStatusFilterChange?.(value);
+                      }}
+                    >
+                      <SelectTrigger
+                        className={`w-full ${
+                          direction === "rtl" ? "text-right flex-row-reverse" : ""
+                        }`}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent
+                        dir={direction}
+                        className={direction === "rtl" ? "text-right" : ""}
+                      >
+                        <SelectItem value="all">{labels.all}</SelectItem>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Additional filters in mobile sheet */}
+                {filters.map((filter) => {
+                  const options =
+                    filter.options ??
+                    Array.from(
+                      new Set(
+                        data
+                          .map((item) => item[filter.key])
+                          .filter((value) => value !== null && value !== undefined)
+                          .map((value) => String(value)),
+                      ),
+                    )
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((value) => ({ value, label: value }));
+
+                  return (
+                    <div key={filter.key} className="space-y-2">
+                      <div className="text-sm font-medium">{filter.label}</div>
+                      <Select
+                        value={filterValues[filter.key] ?? "all"}
+                        onValueChange={(value) =>
+                          setFilterValues((prev) => {
+                            const next = {
+                              ...prev,
+                              [filter.key]: value,
+                            };
+                            onFilterValuesChange?.(next);
+                            return next;
+                          })
+                        }
+                      >
+                        <SelectTrigger
+                          className={`w-full ${
+                            direction === "rtl" ? "text-right flex-row-reverse" : ""
+                          }`}
+                        >
+                          <SelectValue placeholder={filter.label} />
+                        </SelectTrigger>
+                        <SelectContent
+                          dir={direction}
+                          className={direction === "rtl" ? "text-right" : ""}
+                        >
+                          <SelectItem value="all">{labels.all}</SelectItem>
+                          {options.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+
+        {/* Desktop Filters - inline */}
+        <div className="hidden sm:flex items-center gap-2">
+          {showStatusFilter && statusOptions.length > 0 &&
+            renderFilterSelect(
+              "status",
+              labels.status,
+              statusOptions,
+              statusFilter,
+              (value) => {
                 setStatusFilter(value);
                 onStatusFilterChange?.(value);
-              }}
-            >
-              <SelectTrigger
-                className={`min-w-30 ${
-                  direction === "rtl" ? "text-right flex-row-reverse" : ""
-                }`}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent
-                dir={direction}
-                className={direction === "rtl" ? "text-right" : ""}
-              >
-                <SelectItem value="all">{labels.all}</SelectItem>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {filters.length > 0 &&
-          filters.map((filter) => {
+              },
+              false,
+            )}
+
+          {filters.map((filter) => {
             const options =
               filter.options ??
               Array.from(
@@ -298,49 +453,24 @@ export function DataTable<T extends Record<string, unknown>>({
                 .sort((a, b) => a.localeCompare(b))
                 .map((value) => ({ value, label: value }));
 
-            return (
-              <div
-                key={filter.key}
-                className="w-full sm:max-w-37.5 sm:w-auto space-y-1"
-              >
-                <div className="text-xs font-medium text-muted-foreground">
-                  {filter.label}
-                </div>
-                <Select
-                  value={filterValues[filter.key] ?? "all"}
-                  onValueChange={(value) =>
-                    setFilterValues((prev) => {
-                      const next = {
-                        ...prev,
-                        [filter.key]: value,
-                      };
-                      onFilterValuesChange?.(next);
-                      return next;
-                    })
-                  }
-                >
-                  <SelectTrigger
-                    className={`min-w-35 ${
-                      direction === "rtl" ? "text-right flex-row-reverse" : ""
-                    }`}
-                  >
-                    <SelectValue placeholder={filter.label} />
-                  </SelectTrigger>
-                  <SelectContent
-                    dir={direction}
-                    className={direction === "rtl" ? "text-right" : ""}
-                  >
-                    <SelectItem value="all">{labels.all}</SelectItem>
-                    {options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            return renderFilterSelect(
+              filter.key,
+              filter.label,
+              options,
+              filterValues[filter.key] ?? "all",
+              (value) =>
+                setFilterValues((prev) => {
+                  const next = {
+                    ...prev,
+                    [filter.key]: value,
+                  };
+                  onFilterValuesChange?.(next);
+                  return next;
+                }),
+              false,
             );
           })}
+        </div>
       </div>
 
       {/* Results count */}

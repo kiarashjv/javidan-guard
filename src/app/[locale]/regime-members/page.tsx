@@ -199,6 +199,7 @@ export default function RegimeMembersPage() {
               previous: table("previous"),
               next: table("next"),
               status: table("status"),
+              filters: table("filters"),
             }}
           pagination={{
             pageIndex,
