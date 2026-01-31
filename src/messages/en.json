@@ -5,6 +5,12 @@
     "ctaPrimary": "Report a case",
     "ctaSecondary": "Browse records"
   },
+  "map": {
+    "victims": "Victims",
+    "actions": "Actions",
+    "mercenaries": "Mercenaries",
+    "viewDetails": "View Details"
+  },
   "nav": {
     "brandName": "Gard-e Javidan",
     "brandTagline": "Documentation & Verification System",
@@ -361,6 +367,42 @@
     "email": "contact@gardejavidan.org",
     "social": "Follow us",
     "copyright": "© {year} Gard-e Javidan. All rights reserved."
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "subtitle": "We minimize data collection and protect contributors.",
+    "sections": {
+      "scope": {
+        "title": "Scope",
+        "body": "This policy explains how Gard-e Javidan handles data on this platform."
+      },
+      "collection": {
+        "title": "Data we collect",
+        "body": "We collect only what is necessary to keep the platform safe and functional.",
+        "items": [
+          "Anonymous session identifiers derived from browser fingerprints",
+          "Contribution metadata (timestamps and verification counts)",
+          "Hashed network data for abuse prevention (no raw IPs stored)",
+          "User-supplied content and evidence you choose to submit"
+        ]
+      },
+      "cookies": {
+        "title": "Cookies and tracking",
+        "body": "We do not use advertising trackers. Minimal storage is used to remember your session and language preference."
+      },
+      "storage": {
+        "title": "Data storage",
+        "body": "Records are stored with full history for accountability. We never delete records; changes are preserved as versions."
+      },
+      "security": {
+        "title": "Security",
+        "body": "We use encryption in transit and rate limiting to protect the platform. No personal accounts or emails are required."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "If you have privacy concerns, contact us at the email listed in the footer."
+      }
+    }
   },
   "errors": {
     "title": "Something went wrong",

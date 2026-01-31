@@ -141,12 +141,18 @@ export default async function LocaleLayout({
 
                 <h4 className="text-sm font-semibold mt-2">{tFooter("legal")}</h4>
                 <nav className="flex flex-col gap-2">
-                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <Link
+                    href={`/${locale}/privacy`}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     {tFooter("privacy")}
-                  </a>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  </Link>
+                  <Link
+                    href="#"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     {tFooter("terms")}
-                  </a>
+                  </Link>
                 </nav>
               </div>
             </div>
