@@ -1,15 +1,21 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "convex/react";
 import { Marquee } from "@/components/shadcn-space/animations/marquee";
 import { api } from "@/lib/convex-api";
 
-export function UpdatesMarquee() {
+export const UpdatesMarquee = memo(function UpdatesMarquee() {
   const t = useTranslations("updates");
   const feed = useQuery(api.recent.feed, { limit: 12 });
 
-  const items = feed?.map((item) => `${item.title} · ${item.subtitle}`) ?? [];
+  // Memoize items to prevent re-creating array on every render
+  const items = useMemo(
+    () => feed?.map((item) => `${item.title} · ${item.subtitle}`) ?? [],
+    [feed]
+  );
+
   const content = items.length > 0 ? items : [t("marqueeEmpty")];
 
   return (
@@ -41,4 +47,4 @@ export function UpdatesMarquee() {
       </div>
     </div>
   );
-}
+});

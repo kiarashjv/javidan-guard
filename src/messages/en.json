@@ -9,7 +9,17 @@
     "victims": "Victims",
     "actions": "Actions",
     "mercenaries": "Mercenaries",
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "victimsCount": "Victims Count",
+    "documentedVictims": "Documented victims",
+    "recordedActions": "Recorded actions",
+    "identifiedMercenaries": "Identified mercenaries",
+    "regimeMember": "Regime Member",
+    "victim": "Victim",
+    "action": "Action",
+    "recentActivity": "Recent Activity",
+    "liveUpdates": "Live Updates",
+    "documentationVerification": "Documentation & Verification"
   },
   "nav": {
     "brandName": "Gard-e Javidan",

@@ -33,6 +33,8 @@ export const feed = query({
         title: item.name,
         subtitle: `${item.organization} · ${item.unit}`,
         status: item.status,
+        provinceCode: item.lastKnownProvince ?? null,
+        location: item.lastKnownLocation ?? null,
         createdAt: item.createdAt,
       })),
       ...victims.map((item) => ({
@@ -41,6 +43,8 @@ export const feed = query({
         title: item.name,
         subtitle: `${item.incidentLocation} · ${item.incidentDate}`,
         status: item.status,
+        provinceCode: item.incidentProvince ?? null,
+        location: item.incidentLocation ?? null,
         createdAt: item.createdAt,
       })),
       ...actions.map((item) => ({
@@ -49,6 +53,8 @@ export const feed = query({
         title: item.actionType,
         subtitle: `${item.location} · ${item.date}`,
         status: null,
+        provinceCode: item.locationProvince ?? null,
+        location: item.location ?? null,
         createdAt: item.createdAt,
       })),
     ];

@@ -9,7 +9,17 @@
     "victims": "جاویدنامان",
     "actions": "اقدامات",
     "mercenaries": "مزدورها",
-    "viewDetails": "مشاهده جزئیات"
+    "viewDetails": "مشاهده جزئیات",
+    "victimsCount": "تعداد جاویدنامان",
+    "documentedVictims": "جاویدنامان مستندشده",
+    "recordedActions": "اقدامات ثبت‌شده",
+    "identifiedMercenaries": "مزدورهای شناسایی‌شده",
+    "regimeMember": "عضو رژیم",
+    "victim": "جاویدنام",
+    "action": "اقدام",
+    "recentActivity": "فعالیت‌های اخیر",
+    "liveUpdates": "به‌روزرسانی زنده",
+    "documentationVerification": "مستندسازی و راستی‌آزمایی"
   },
   "nav": {
     "brandName": "گارد جاویدان",

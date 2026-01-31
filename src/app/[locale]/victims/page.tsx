@@ -28,9 +28,13 @@ export default function VictimsPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const trimmedQuery = debouncedQuery.trim();
   const initialStatus = searchParams.get("status") ?? "all";
+
+  // Handle province parameter from map click
+  const provinceNameParam = searchParams.get("provinceName");
+
   const initialFilterValues = {
     hometown: searchParams.get("hometown") ?? "all",
-    incidentLocation: searchParams.get("incidentLocation") ?? "all",
+    incidentLocation: provinceNameParam ?? searchParams.get("incidentLocation") ?? "all",
   };
   const result = useQuery(api.victims.listCurrentPaginated, {
     paginationOpts: { numItems: pageSize, cursor },

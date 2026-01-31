@@ -28,8 +28,12 @@ export default function ActionsPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const trimmedQuery = debouncedQuery.trim();
   const initialStatus = searchParams.get("status") ?? "all";
+
+  // Handle province parameter from map click
+  const provinceNameParam = searchParams.get("provinceName");
+
   const initialFilterValues = {
-    location: searchParams.get("location") ?? "all",
+    location: provinceNameParam ?? searchParams.get("location") ?? "all",
   };
   const result = useQuery(api.actions.listCurrentPaginated, {
     paginationOpts: { numItems: pageSize, cursor },

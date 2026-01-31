@@ -28,10 +28,14 @@ export default function RegimeMembersPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const trimmedQuery = debouncedQuery.trim();
   const initialStatus = searchParams.get("status") ?? "all";
+
+  // Handle province parameter from map click
+  const provinceNameParam = searchParams.get("provinceName");
+
   const initialFilterValues = {
     organization: searchParams.get("organization") ?? "all",
     unit: searchParams.get("unit") ?? "all",
-    lastKnownLocation: searchParams.get("lastKnownLocation") ?? "all",
+    lastKnownLocation: provinceNameParam ?? searchParams.get("lastKnownLocation") ?? "all",
   };
   const result = useQuery(api.regimeMembers.listCurrentPaginated, {
     paginationOpts: { numItems: pageSize, cursor },

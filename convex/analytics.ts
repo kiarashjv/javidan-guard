@@ -115,3 +115,32 @@ export const getMapData = query({
     return provinceData;
   },
 });
+
+export const getTotalStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const [victimsCount, actionsCount, mercenariesCount] = await Promise.all([
+      ctx.db
+        .query("victims")
+        .filter((q) => q.eq(q.field("currentVersion"), true))
+        .collect()
+        .then((v) => v.length),
+      ctx.db
+        .query("actions")
+        .filter((q) => q.eq(q.field("currentVersion"), true))
+        .collect()
+        .then((a) => a.length),
+      ctx.db
+        .query("regimeMembers")
+        .filter((q) => q.eq(q.field("currentVersion"), true))
+        .collect()
+        .then((m) => m.length),
+    ]);
+
+    return {
+      victims: victimsCount,
+      actions: actionsCount,
+      mercenaries: mercenariesCount,
+    };
+  },
+});

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, GeoJSON, useMap, Circle } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { MapLegend } from "./MapLegend";
 
 interface ProvinceData {
   victims: number;
@@ -13,6 +14,18 @@ interface ProvinceData {
 interface IranMapProps {
   data?: Record<string, ProvinceData>;
   onNewActivity?: (provinceCode: string) => void;
+  onProvinceClick?: (
+    provinceCode: string,
+    provinceName: string,
+    type: "victims" | "actions" | "mercenaries",
+  ) => void;
+  translations?: {
+    victims: string;
+    actions: string;
+    mercenaries: string;
+    viewDetails: string;
+  };
+  locale?: "en" | "fa";
 }
 
 // Color scale function
@@ -35,7 +48,7 @@ function getProvinceCentroid(feature: {
       coords = (feature.geometry.coordinates as number[][][])[0];
     } else if (feature.geometry.type === "MultiPolygon") {
       // For MultiPolygon, take the first polygon's outer ring
-      coords = ((feature.geometry.coordinates as number[][][][])[0][0]);
+      coords = (feature.geometry.coordinates as number[][][][])[0][0];
     }
 
     if (coords.length === 0) return null;
@@ -55,8 +68,28 @@ function getProvinceCentroid(feature: {
 
 function MapComponent({
   provinceData,
+  onProvinceClick,
+  translations = {
+    victims: "Victims",
+    actions: "Actions",
+    mercenaries: "Mercenaries",
+    viewDetails: "View Details",
+  },
+  locale = "en",
 }: {
   provinceData: Record<string, ProvinceData>;
+  onProvinceClick?: (
+    provinceCode: string,
+    provinceName: string,
+    type: "victims" | "actions" | "mercenaries",
+  ) => void;
+  translations?: {
+    victims: string;
+    actions: string;
+    mercenaries: string;
+    viewDetails: string;
+  };
+  locale?: "en" | "fa";
 }) {
   const [geoData, setGeoData] = useState<Record<string, unknown> | null>(null);
   const [animatingProvinces, setAnimatingProvinces] = useState<Set<string>>(
@@ -65,7 +98,9 @@ function MapComponent({
   const [provinceCentroids, setProvinceCentroids] = useState<
     Map<string, [number, number]>
   >(new Map());
-  const [previousData, setPreviousData] = useState<Record<string, ProvinceData>>({});
+  const [previousData, setPreviousData] = useState<
+    Record<string, ProvinceData>
+  >({});
   const animatingRef = useRef<Set<string>>(new Set());
   const map = useMap();
 
@@ -155,37 +190,73 @@ function MapComponent({
     };
   }, [provinceData, previousData]);
 
-  const onEachFeature = (feature: { properties?: { tags?: Record<string, string> } }, layer: L.Layer) => {
+  const onEachFeature = (
+    feature: { properties?: { tags?: Record<string, string> } },
+    layer: L.Layer,
+  ) => {
     const provinceCode = feature.properties?.tags?.["ISO3166-2"];
     const provinceName =
-      feature.properties?.tags?.["name:en"] ||
-      feature.properties?.tags?.name ||
-      "Unknown";
+      locale === "fa"
+        ? feature.properties?.tags?.["name:fa"] ||
+          feature.properties?.tags?.name ||
+          "نامشخص"
+        : feature.properties?.tags?.["name:en"] ||
+          feature.properties?.tags?.name ||
+          "Unknown";
     const data = provinceData[provinceCode || ""];
 
     if (data) {
-      // Create popup content
+      // Create popup content with clickable stats
       const popupContent = `
-        <div class="p-2">
-          <div class="font-semibold text-lg mb-2">${provinceName}</div>
-          <div class="text-sm space-y-1">
-            <div class="flex justify-between gap-4">
-              <span class="text-gray-600">Victims:</span>
+        <div class="p-3" style="font-family: inherit;">
+          <div class="font-semibold text-xl mb-3">${provinceName}</div>
+          <div class="text-base space-y-1.5">
+            <div class="flex justify-between gap-4 cursor-pointer hover:bg-gray-100 p-1.5 rounded transition-colors" data-type="victims" data-province-code="${provinceCode}" data-province-name="${provinceName}">
+              <span class="text-gray-600">${translations.victims}:</span>
               <span class="font-semibold text-red-600">${data.victims}</span>
             </div>
-            <div class="flex justify-between gap-4">
-              <span class="text-gray-600">Actions:</span>
+            <div class="flex justify-between gap-4 cursor-pointer hover:bg-gray-100 p-1.5 rounded transition-colors" data-type="actions" data-province-code="${provinceCode}" data-province-name="${provinceName}">
+              <span class="text-gray-600">${translations.actions}:</span>
               <span class="font-semibold">${data.actions}</span>
             </div>
-            <div class="flex justify-between gap-4">
-              <span class="text-gray-600">Mercenaries:</span>
+            <div class="flex justify-between gap-4 cursor-pointer hover:bg-gray-100 p-1.5 rounded transition-colors" data-type="mercenaries" data-province-code="${provinceCode}" data-province-name="${provinceName}">
+              <span class="text-gray-600">${translations.mercenaries}:</span>
               <span class="font-semibold">${data.mercenaries}</span>
             </div>
           </div>
         </div>
       `;
 
-      (layer as L.Path).bindPopup(popupContent);
+      const popup = (layer as L.Path).bindPopup(popupContent, {
+        autoPan: true,
+        autoPanPaddingTopLeft: [5, 5],
+        autoPanPaddingBottomRight: [5, 5],
+        maxWidth: 300,
+        closeButton: true,
+        keepInView: true,
+      });
+
+      // Add click handlers for popup content
+      popup.on("popupopen", () => {
+        const popupElement = popup.getPopup()?.getElement();
+        if (popupElement && onProvinceClick) {
+          const clickableItems = popupElement.querySelectorAll("[data-type]");
+          clickableItems.forEach((item) => {
+            item.addEventListener("click", (e) => {
+              const target = e.currentTarget as HTMLElement;
+              const type = target.getAttribute("data-type") as
+                | "victims"
+                | "actions"
+                | "mercenaries";
+              const code = target.getAttribute("data-province-code") || "";
+              const name = target.getAttribute("data-province-name") || "";
+              if (type && code && name) {
+                onProvinceClick(code, name, type);
+              }
+            });
+          });
+        }
+      });
 
       // Add hover effect with proper z-index
       layer.on({
@@ -212,7 +283,9 @@ function MapComponent({
     }
   };
 
-  const style = (feature?: { properties?: { tags?: Record<string, string> } }) => {
+  const style = (feature?: {
+    properties?: { tags?: Record<string, string> };
+  }) => {
     const provinceCode = feature?.properties?.tags?.["ISO3166-2"] || "";
     const data = provinceData[provinceCode];
     const fillColor = data ? getColor(data.victims) : "#e5e7eb";
@@ -229,29 +302,32 @@ function MapComponent({
   if (!geoData) return null;
 
   // Render radar animation circles for animating provinces
-  const radarCircles = Array.from(animatingProvinces).flatMap((provinceCode) => {
-    const centroid = provinceCentroids.get(provinceCode);
-    if (!centroid) return [];
+  const radarCircles = Array.from(animatingProvinces).flatMap(
+    (provinceCode) => {
+      const centroid = provinceCentroids.get(provinceCode);
+      if (!centroid) return [];
 
-    // Create 4 ripple circles with staggered delays for water droplet effect
-    // All start at same size and scale up while fading out
-    return [0, 600, 1200, 1800].map((_, index) => (
-      <Circle
-        key={`${provinceCode}-radar-${index}`}
-        center={centroid}
-        radius={15000} // Base radius in meters (~50px at typical zoom)
-        pathOptions={{
-          fillColor: "#ffffff",
-          fillOpacity: 0,
-          color: "#dc2626",
-          weight: 3,
-          opacity: 0,
-        }}
-        className={`radar-ripple radar-ripple-${index}`}
-        eventHandlers={{}}
-      />
-    ));
-  });
+      // Create 4 ripple circles with staggered delays for water droplet effect
+      // All start at same size and scale up while fading out
+      return [0, 600, 1200, 1800].map((_, index) => (
+        <Circle
+          key={`${provinceCode}-radar-${index}`}
+          center={centroid}
+          radius={15000} // Base radius in meters (~50px at typical zoom)
+          pathOptions={{
+            fillColor: "#ffffff",
+            fillOpacity: 0,
+            color: "#dc2626",
+            weight: 3,
+            opacity: 0,
+          }}
+          className={`radar-ripple radar-ripple-${index}`}
+          eventHandlers={{}}
+          interactive={false}
+        />
+      ));
+    },
+  );
 
   // Inline styles for radar ripple animation
   const radarStyles = (
@@ -263,6 +339,7 @@ function MapComponent({
         .radar-ripple-3 {
           transform-box: fill-box;
           transform-origin: center center;
+          pointer-events: none;
         }
 
         @keyframes radar-ripple {
@@ -304,13 +381,23 @@ function MapComponent({
   return (
     <>
       {radarStyles}
-      <GeoJSON data={geoData as never} style={style} onEachFeature={onEachFeature} />
+      <GeoJSON
+        key={Object.keys(provinceData).length}
+        data={geoData as never}
+        style={style}
+        onEachFeature={onEachFeature}
+      />
       {radarCircles}
     </>
   );
 }
 
-export default function IranMap({ data = {} }: IranMapProps) {
+export default function IranMap({
+  data = {},
+  onProvinceClick,
+  translations,
+  locale = "en",
+}: IranMapProps) {
   const [zoom, setZoom] = useState(6);
   const [center, setCenter] = useState<[number, number]>([32, 54]);
   const [mapScale, setMapScale] = useState(1);
@@ -352,7 +439,7 @@ export default function IranMap({ data = {} }: IranMapProps) {
   }
 
   return (
-    <div className="w-full h-100 md:h-200 lg:h-200 rounded-lg relative overflow-hidden flex items-center justify-center">
+    <div className="w-full h-120 md:h-225 lg:h-250 rounded-lg relative overflow-hidden flex items-center justify-center">
       <div
         style={{
           transform: `scale(${mapScale})`,
@@ -377,9 +464,15 @@ export default function IranMap({ data = {} }: IranMapProps) {
           dragging={false}
           attributionControl={false}
         >
-          <MapComponent provinceData={data} />
+          <MapComponent
+            provinceData={data}
+            onProvinceClick={onProvinceClick}
+            translations={translations}
+            locale={locale}
+          />
         </MapContainer>
       </div>
+      <MapLegend />
     </div>
   );
 }
