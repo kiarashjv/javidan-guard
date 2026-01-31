@@ -404,6 +404,42 @@
       }
     }
   },
+  "terms": {
+    "title": "Terms of service",
+    "subtitle": "Guidelines for using the platform responsibly.",
+    "sections": {
+      "purpose": {
+        "title": "Purpose",
+        "body": "Gard-e Javidan exists to document public records with verification and transparency."
+      },
+      "conduct": {
+        "title": "Contributor responsibilities",
+        "body": "By submitting content you agree to follow these rules:",
+        "items": [
+          "Submit only verified, evidence-backed information",
+          "Do not share personal identifying information about contributors",
+          "Avoid harassment, hate speech, or incitement",
+          "Respect the verification workflow and community review"
+        ]
+      },
+      "verification": {
+        "title": "Verification workflow",
+        "body": "Updates require multiple confirmations before becoming official. The platform preserves historical versions."
+      },
+      "removal": {
+        "title": "Content moderation",
+        "body": "We may restrict content that violates safety or legal obligations, while preserving audit trails."
+      },
+      "liability": {
+        "title": "Liability",
+        "body": "Content is provided by contributors. Gard-e Javidan does not guarantee completeness or accuracy."
+      },
+      "changes": {
+        "title": "Changes to these terms",
+        "body": "We may update these terms to protect the community. Continued use means acceptance of updates."
+      }
+    }
+  },
   "errors": {
     "title": "Something went wrong",
     "subtitle": "An unexpected error occurred.",

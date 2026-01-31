@@ -148,7 +148,7 @@ export default async function LocaleLayout({
                     {tFooter("privacy")}
                   </Link>
                   <Link
-                    href="#"
+                    href={`/${locale}/terms`}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {tFooter("terms")}
