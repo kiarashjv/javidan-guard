@@ -32,6 +32,13 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   onRowClick?: (item: T) => void;
   pageSize?: number;
+  pagination?: {
+    pageIndex: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+    onNext: () => void;
+    onPrevious: () => void;
+  };
   showStatusFilter?: boolean;
   statusOptions?: { value: string; label: string }[];
   filters?: {
@@ -48,7 +55,14 @@ interface DataTableProps<T> {
       filtered: number,
       total: number,
     ) => string;
+    resultsPage?: (from: number, to: number) => string;
+    resultsFilteredPage?: (
+      from: number,
+      to: number,
+      filtered: number,
+    ) => string;
     page: (current: number, total: number) => string;
+    pageCurrent?: (current: number) => string;
     rowsPerPage: string;
     noResults: string;
     previous: string;
@@ -63,6 +77,7 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder = "Search...",
   onRowClick,
   pageSize = 20,
+  pagination,
   showStatusFilter = false,
   statusOptions = [],
   filters = [],
@@ -73,7 +88,11 @@ export function DataTable<T extends Record<string, unknown>>({
       filtered === total
         ? `Showing ${from}-${to} of ${total} results`
         : `Showing ${from}-${to} of ${filtered} results (filtered from ${total} total)`,
+    resultsPage: (from, to) => `Showing ${from}-${to}`,
+    resultsFilteredPage: (from, to, filtered) =>
+      `Showing ${from}-${to} of ${filtered} results`,
     page: (current, total) => `Page ${current} of ${total}`,
+    pageCurrent: (current) => `Page ${current}`,
     rowsPerPage: "Rows per page",
     noResults: "No results found",
     previous: "Previous",
@@ -154,13 +173,14 @@ export function DataTable<T extends Record<string, unknown>>({
   ]);
 
   // Pagination
-  const paginatedData = filteredData.slice(
+  const pageIndex = pagination?.pageIndex ?? 1;
+  const paginatedData = pagination ? filteredData : filteredData.slice(
     0,
     pageSizeState,
   );
   const rangeStart =
-    filteredData.length === 0 ? 0 : 1;
-  const rangeEnd = Math.min(pageSizeState, filteredData.length);
+    paginatedData.length === 0 ? 0 : (pageIndex - 1) * pageSizeState + 1;
+  const rangeEnd = (pageIndex - 1) * pageSizeState + paginatedData.length;
 
   const handleSort = (key: keyof T & string) => {
     if (sortKey === key) {
@@ -270,7 +290,17 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {/* Results count */}
       <div className="text-sm text-muted-foreground">
-        {labels.results(rangeStart, rangeEnd, filteredData.length, data.length)}
+        {pagination
+          ? filteredData.length === data.length
+            ? labels.resultsPage?.(rangeStart, rangeEnd) ??
+              labels.results(rangeStart, rangeEnd, filteredData.length, data.length)
+            : labels.resultsFilteredPage?.(
+                rangeStart,
+                rangeEnd,
+                filteredData.length,
+              ) ??
+              labels.results(rangeStart, rangeEnd, filteredData.length, data.length)
+          : labels.results(rangeStart, rangeEnd, filteredData.length, data.length)}
       </div>
 
       {/* Table */}
@@ -331,7 +361,31 @@ export function DataTable<T extends Record<string, unknown>>({
         </Table>
       </div>
 
-      {/* Pagination removed: fixed first page only */}
+      {pagination && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground">
+            {labels.pageCurrent?.(pageIndex) ?? labels.page(pageIndex, pageIndex)}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={pagination.onPrevious}
+              disabled={!pagination.hasPrevious}
+              className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {labels.previous}
+            </button>
+            <button
+              type="button"
+              onClick={pagination.onNext}
+              disabled={!pagination.hasNext}
+              className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {labels.next}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

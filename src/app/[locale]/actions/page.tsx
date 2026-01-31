@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery } from "convex/react";
 import { PlusIcon } from "lucide-react";
@@ -15,9 +16,32 @@ export default function ActionsPage() {
   const locale = useLocale();
   const t = useTranslations("actions");
   const table = useTranslations("table");
-  const actions = useQuery(api.actions.listCurrent, { limit: 20 });
+  const pageSize = 20;
+  const [cursorStack, setCursorStack] = useState<(string | null)[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const result = useQuery(api.actions.listCurrentPaginated, {
+    paginationOpts: { numItems: pageSize, cursor },
+  });
+  const actions = result?.page ?? [];
   const direction = locale === "fa" ? "rtl" : "ltr";
   const actionRows = (actions ?? []) as ActionRow[];
+  const pageIndex = cursorStack.length + 1;
+
+  const handleNext = () => {
+    if (!result?.continueCursor) return;
+    setCursorStack((prev) => [...prev, cursor]);
+    setCursor(result.continueCursor);
+  };
+
+  const handlePrevious = () => {
+    setCursorStack((prev) => {
+      if (prev.length === 0) return prev;
+      const next = prev.slice(0, -1);
+      const previousCursor = next.length === 0 ? null : next[next.length - 1];
+      setCursor(previousCursor);
+      return next;
+    });
+  };
 
   return (
     <section className="space-y-8">
@@ -35,7 +59,7 @@ export default function ActionsPage() {
         </Button>
       </div>
 
-      {actions === undefined ? (
+      {result === undefined ? (
         <div className="text-sm text-muted-foreground">{t("loading")}</div>
       ) : (
         <DataTable
@@ -85,12 +109,23 @@ export default function ActionsPage() {
               filtered === total
                 ? table("results", { from, to, total })
                 : table("resultsFiltered", { from, to, filtered, total }),
+            resultsPage: (from, to) => table("resultsPage", { from, to }),
+            resultsFilteredPage: (from, to, filtered) =>
+              table("resultsFilteredPage", { from, to, filtered }),
             page: (current, total) => table("page", { current, total }),
+            pageCurrent: (current) => table("pageCurrent", { current }),
             rowsPerPage: table("rowsPerPage"),
             noResults: table("noResults"),
             previous: table("previous"),
             next: table("next"),
             status: table("status"),
+          }}
+          pagination={{
+            pageIndex,
+            hasNext: Boolean(result?.continueCursor),
+            hasPrevious: cursorStack.length > 0,
+            onNext: handleNext,
+            onPrevious: handlePrevious,
           }}
         />
       )}

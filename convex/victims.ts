@@ -27,6 +27,31 @@ export const listCurrent = queryGeneric({
   },
 });
 
+export const listCurrentPaginated = queryGeneric({
+  args: {
+    paginationOpts: v.optional(
+      v.object({
+        numItems: v.number(),
+        cursor: v.optional(v.union(v.string(), v.null())),
+      }),
+    ),
+  },
+  handler: async (
+    ctx: QueryCtx,
+    args: { paginationOpts?: { numItems: number; cursor?: string | null } },
+  ) => {
+    const paginationOpts = args.paginationOpts ?? { numItems: 20, cursor: null };
+    return ctx.db
+      .query("victims")
+      .withIndex("by_current_version", (q) => q.eq("currentVersion", true))
+      .order("desc")
+      .paginate({
+        numItems: paginationOpts.numItems,
+        cursor: paginationOpts.cursor ?? null,
+      });
+  },
+});
+
 export const getById = queryGeneric({
   args: { id: v.id("victims") },
   handler: async (ctx: QueryCtx, args: { id: GenericId<"victims"> }) => {

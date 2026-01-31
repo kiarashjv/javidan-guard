@@ -1,6 +1,12 @@
 import { makeFunctionReference } from "convex/server";
 import type { RegimeMember, Victim } from "@/types/records";
 
+type PaginatedResult<T> = {
+  page: T[];
+  isDone: boolean;
+  continueCursor?: string;
+};
+
 export const api = {
   regimeMembers: {
     listCurrent: makeFunctionReference<
@@ -9,6 +15,13 @@ export const api = {
       RegimeMember[]
     >(
       "regimeMembers:listCurrent"
+    ),
+    listCurrentPaginated: makeFunctionReference<
+      "query",
+      { paginationOpts?: { numItems: number; cursor?: string | null } },
+      PaginatedResult<RegimeMember>
+    >(
+      "regimeMembers:listCurrentPaginated"
     ),
     getById: makeFunctionReference<
       "query",
@@ -43,6 +56,13 @@ export const api = {
     >(
       "victims:listCurrent"
     ),
+    listCurrentPaginated: makeFunctionReference<
+      "query",
+      { paginationOpts?: { numItems: number; cursor?: string | null } },
+      PaginatedResult<Victim>
+    >(
+      "victims:listCurrentPaginated"
+    ),
     getById: makeFunctionReference<"query", { id: string }, Victim | null>(
       "victims:getById"
     ),
@@ -76,6 +96,13 @@ export const api = {
       unknown[]
     >(
       "actions:listCurrent"
+    ),
+    listCurrentPaginated: makeFunctionReference<
+      "query",
+      { paginationOpts?: { numItems: number; cursor?: string | null } },
+      PaginatedResult<unknown>
+    >(
+      "actions:listCurrentPaginated"
     ),
     getById: makeFunctionReference<"query", { id: string }, unknown | null>(
       "actions:getById"

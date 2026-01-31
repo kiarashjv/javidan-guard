@@ -309,6 +309,9 @@
     "previous": "قبلی",
     "next": "بعدی",
     "status": "وضعیت",
+    "resultsPage": "نمایش {from}–{to}",
+    "resultsFilteredPage": "نمایش {from}–{to} از {filtered} نتیجه",
+    "pageCurrent": "صفحه {current}",
     "page": "صفحه {current} از {total}",
     "results": "نمایش {from}–{to} از {total} نتیجه",
     "resultsFiltered": "نمایش {from}–{to} از {filtered} نتیجه (از {total} نتیجه)"
