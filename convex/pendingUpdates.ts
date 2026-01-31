@@ -22,12 +22,13 @@ export const listPending = query({
     ),
   },
   handler: async (ctx, args) => {
-    const pending = await ctx.db
+    return ctx.db
       .query("pendingUpdates")
-      .filter((q) => q.eq(q.field("targetCollection"), args.targetCollection))
-      .filter((q) => q.eq(q.field("status"), "pending"))
+      .withIndex("by_collection_status", (q) =>
+        q.eq("targetCollection", args.targetCollection).eq("status", "pending")
+      )
+      .order("desc")
       .collect();
-    return pending.sort((a, b) => b.proposedAt - a.proposedAt);
   },
 });
 
@@ -41,13 +42,16 @@ export const listPendingForTarget = query({
     targetId: v.union(v.id("regimeMembers"), v.id("victims"), v.id("actions")),
   },
   handler: async (ctx, args) => {
-    const pending = await ctx.db
+    return ctx.db
       .query("pendingUpdates")
-      .filter((q) => q.eq(q.field("targetCollection"), args.targetCollection))
-      .filter((q) => q.eq(q.field("targetId"), args.targetId))
-      .filter((q) => q.eq(q.field("status"), "pending"))
+      .withIndex("by_target", (q) =>
+        q
+          .eq("targetCollection", args.targetCollection)
+          .eq("targetId", args.targetId)
+          .eq("status", "pending")
+      )
+      .order("desc")
       .collect();
-    return pending.sort((a, b) => b.proposedAt - a.proposedAt);
   },
 });
 

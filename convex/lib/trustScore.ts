@@ -10,7 +10,7 @@ export async function adjustTrustScore(
 ) {
   const session = await ctx.db
     .query("sessions")
-    .filter((q) => q.eq(q.field("sessionId"), sessionId))
+    .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
     .first();
 
   if (!session) {
@@ -27,7 +27,7 @@ export async function recordVerification(
 ) {
   const session = await ctx.db
     .query("sessions")
-    .filter((q) => q.eq(q.field("sessionId"), sessionId))
+    .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
     .first();
 
   if (!session) {

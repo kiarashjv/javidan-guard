@@ -24,7 +24,10 @@ export default defineSchema({
     supersededBy: v.union(v.null(), v.id("regimeMembers")),
     verificationCount: v.number(),
     previousVersions: v.array(v.id("regimeMembers")),
-  }),
+  })
+    .index("by_current_version", ["currentVersion", "createdAt"])
+    .index("by_session", ["createdBySession", "currentVersion"])
+    .index("by_status", ["status", "currentVersion"]),
 
   victims: defineTable({
     name: v.string(),
@@ -51,7 +54,10 @@ export default defineSchema({
     supersededBy: v.union(v.null(), v.id("victims")),
     verificationCount: v.number(),
     previousVersions: v.array(v.id("victims")),
-  }),
+  })
+    .index("by_current_version", ["currentVersion", "createdAt"])
+    .index("by_session", ["createdBySession", "currentVersion"])
+    .index("by_status", ["status", "currentVersion"]),
 
   actions: defineTable({
     perpetratorId: v.id("regimeMembers"),
@@ -76,7 +82,10 @@ export default defineSchema({
     supersededBy: v.union(v.null(), v.id("actions")),
     verificationCount: v.number(),
     previousVersions: v.array(v.id("actions")),
-  }),
+  })
+    .index("by_current_version", ["currentVersion", "createdAt"])
+    .index("by_session", ["createdBySession", "currentVersion"])
+    .index("by_perpetrator", ["perpetratorId", "currentVersion"]),
 
   pendingUpdates: defineTable({
     targetCollection: v.union(
@@ -101,7 +110,10 @@ export default defineSchema({
     expiresAt: v.number(),
     reason: v.string(),
     targetSnapshot: v.string(),
-  }),
+  })
+    .index("by_target", ["targetCollection", "targetId", "status"])
+    .index("by_status", ["status", "proposedAt"])
+    .index("by_collection_status", ["targetCollection", "status", "proposedAt"]),
 
   auditLogs: defineTable({
     action: v.union(
@@ -123,7 +135,9 @@ export default defineSchema({
     ipHash: v.string(),
     userAgent: v.string(),
     reason: v.string(),
-  }),
+  })
+    .index("by_session", ["sessionId", "timestamp"])
+    .index("by_timestamp", ["timestamp"]),
 
   sessions: defineTable({
     sessionId: v.string(),
@@ -134,7 +148,9 @@ export default defineSchema({
     verificationCount: v.number(),
     trustScore: v.number(),
     ipHash: v.string(),
-  }),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_fingerprint", ["fingerprint"]),
 
   backups: defineTable({
     timestamp: v.number(),

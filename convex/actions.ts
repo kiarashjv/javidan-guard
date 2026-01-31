@@ -21,7 +21,8 @@ export const listCurrent = queryGeneric({
     const limit = args.limit ?? 20;
     return ctx.db
       .query("actions")
-      .filter((q) => q.eq(q.field("currentVersion"), true))
+      .withIndex("by_current_version", (q) => q.eq("currentVersion", true))
+      .order("desc")
       .take(limit);
   },
 });

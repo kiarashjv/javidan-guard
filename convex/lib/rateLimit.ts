@@ -1,7 +1,7 @@
 import type { MutationCtx } from "../_generated/server";
 
 const ONE_HOUR = 60 * 60 * 1000;
-const MAX_CONTRIBUTIONS_PER_HOUR = 10;
+const MAX_CONTRIBUTIONS_PER_HOUR = 50;
 
 export async function checkAndRecordContribution(
   ctx: MutationCtx,
@@ -9,7 +9,7 @@ export async function checkAndRecordContribution(
 ) {
   const session = await ctx.db
     .query("sessions")
-    .filter((q) => q.eq(q.field("sessionId"), sessionId))
+    .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
     .first();
 
   if (!session) {

@@ -13,6 +13,7 @@
 - Avoid hidden side effects; document non-obvious behavior.
 - Do not ignore TypeScript or lint errors.
 - Always run `pnpm check` and `pnpm lint` before reporting completion.
+- Always run tests before committing changes.
 
 ## Project Structure
 - App Router is the source of truth for routes.

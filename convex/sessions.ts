@@ -9,7 +9,7 @@ export const getBySessionId = query({
   handler: async (ctx, args) => {
     return ctx.db
       .query("sessions")
-      .filter((q) => q.eq(q.field("sessionId"), args.sessionId))
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
       .first();
   },
 });
@@ -25,7 +25,7 @@ export const upsertSession = mutation({
     const now = Date.now();
     const existing = await ctx.db
       .query("sessions")
-      .filter((q) => q.eq(q.field("sessionId"), args.sessionId))
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
       .first();
 
     if (!existing) {
@@ -56,7 +56,7 @@ export const canContribute = query({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("sessions")
-      .filter((q) => q.eq(q.field("sessionId"), args.sessionId))
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
       .first();
 
     if (!existing) {
@@ -80,7 +80,7 @@ export const recordContribution = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("sessions")
-      .filter((q) => q.eq(q.field("sessionId"), args.sessionId))
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
       .first();
 
     if (!existing) {
