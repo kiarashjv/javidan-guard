@@ -7,7 +7,6 @@ import { Archive, Clock, Crosshair, Crown, Mail, Send, Heart } from "lucide-reac
 import { locales, type Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
-import { UpdatesSidebar } from "@/components/updates/UpdatesSidebar";
 import { UpdatesMarquee } from "@/components/updates/UpdatesMarquee";
 
 export function generateStaticParams() {
@@ -87,14 +86,7 @@ export default async function LocaleLayout({
 
         {/* Main Content */}
         <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 md:px-6 md:py-12">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div>{children}</div>
-            <div className="hidden lg:block">
-              <div className="sticky top-20">
-                <UpdatesSidebar />
-              </div>
-            </div>
-          </div>
+          {children}
         </main>
 
         {/* Enhanced Footer */}

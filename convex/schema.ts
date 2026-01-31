@@ -15,7 +15,7 @@ export default defineSchema({
       v.literal("arrested"),
       v.literal("fled"),
       v.literal("deceased"),
-      v.literal("unknown")
+      v.literal("unknown"),
     ),
     lastKnownLocation: v.string(),
     createdAt: v.number(),
@@ -36,7 +36,7 @@ export default defineSchema({
       v.literal("captured"),
       v.literal("vanished"),
       v.literal("released"),
-      v.literal("confirmed_dead")
+      v.literal("confirmed_dead"),
     ),
     incidentDate: v.string(),
     incidentLocation: v.string(),
@@ -64,7 +64,7 @@ export default defineSchema({
       v.literal("torture"),
       v.literal("arrest"),
       v.literal("assault"),
-      v.literal("other")
+      v.literal("other"),
     ),
     evidenceUrls: v.array(v.string()),
     videoLinks: v.array(v.string()),
@@ -82,13 +82,9 @@ export default defineSchema({
     targetCollection: v.union(
       v.literal("regimeMembers"),
       v.literal("victims"),
-      v.literal("actions")
+      v.literal("actions"),
     ),
-    targetId: v.union(
-      v.id("regimeMembers"),
-      v.id("victims"),
-      v.id("actions")
-    ),
+    targetId: v.union(v.id("regimeMembers"), v.id("victims"), v.id("actions")),
     proposedChanges: v.string(),
     requiredVerifications: v.number(),
     currentVerifications: v.number(),
@@ -98,7 +94,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("approved"),
       v.literal("rejected"),
-      v.literal("expired")
+      v.literal("expired"),
     ),
     proposedBy: v.string(),
     proposedAt: v.number(),
@@ -112,14 +108,14 @@ export default defineSchema({
       v.literal("create"),
       v.literal("update"),
       v.literal("verify"),
-      v.literal("reject")
+      v.literal("reject"),
     ),
     collection: v.string(),
     documentId: v.union(
       v.id("regimeMembers"),
       v.id("victims"),
       v.id("actions"),
-      v.id("pendingUpdates")
+      v.id("pendingUpdates"),
     ),
     changes: v.string(),
     sessionId: v.string(),
@@ -145,12 +141,12 @@ export default defineSchema({
     backupType: v.union(
       v.literal("scheduled"),
       v.literal("manual"),
-      v.literal("pre-restore")
+      v.literal("pre-restore"),
     ),
     status: v.union(
       v.literal("in_progress"),
       v.literal("completed"),
-      v.literal("failed")
+      v.literal("failed"),
     ),
     recordCounts: v.object({
       regimeMembers: v.number(),
