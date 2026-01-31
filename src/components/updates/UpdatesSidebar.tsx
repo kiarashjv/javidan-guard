@@ -35,7 +35,7 @@ function feedsMatch<T extends { _id: string; createdAt: number }>(
 export function UpdatesSidebar() {
   const t = useTranslations("updates");
   const locale = useLocale();
-  const liveFeed = useQuery(api.recent.feed, { limit: 10 });
+  const liveFeed = useQuery(api.recent.feed, { limit: 6 });
   const [visibleFeed, setVisibleFeed] = useState<NonNullable<
     typeof liveFeed
   > | null>(null);

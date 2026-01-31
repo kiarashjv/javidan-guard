@@ -7,6 +7,7 @@ import { Archive, BookOpen, Clock, Crosshair, Crown } from "lucide-react";
 import { locales, type Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { MobileNav } from "@/components/MobileNav";
+import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { UpdatesMarquee } from "@/components/updates/UpdatesMarquee";
 
@@ -96,7 +97,7 @@ export default async function LocaleLayout({
 
         {/* Main Content */}
         <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 md:px-6 md:py-12">
-          {children}
+          <PageShell locale={locale}>{children}</PageShell>
         </main>
 
         {/* Enhanced Footer */}
