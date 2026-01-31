@@ -1,51 +1,51 @@
 import { query } from "./_generated/server";
 
-// Mapping of province names to ISO codes
-const PROVINCE_TO_ISO: Record<string, string> = {
-  Tehran: "IR-23",
-  Isfahan: "IR-10",
-  Fars: "IR-07",
-  Khuzestan: "IR-06",
-  "Razavi Khorasan": "IR-09",
-  "East Azerbaijan": "IR-03",
-  "West Azerbaijan": "IR-04",
-  Kermanshah: "IR-05",
-  Kerman: "IR-08",
-  Gilan: "IR-01",
-  Mazandaran: "IR-02",
-  "Sistan and Baluchestan": "IR-11",
-  Kurdistan: "IR-12",
-  Hormozgan: "IR-22",
-  Hamadan: "IR-13",
-  Yazd: "IR-21",
-  Ardabil: "IR-24",
-  Markazi: "IR-00",
-  Lorestan: "IR-15",
-  Bushehr: "IR-18",
-  Zanjan: "IR-19",
-  Semnan: "IR-20",
-  Ilam: "IR-16",
-  "Kohgiluyeh and Boyer-Ahmad": "IR-17",
-  Qazvin: "IR-26",
-  Golestan: "IR-27",
-  Qom: "IR-25",
-  "North Khorasan": "IR-28",
-  "South Khorasan": "IR-29",
-  Alborz: "IR-30",
-  "Chaharmahal and Bakhtiari": "IR-14",
-};
+const PROVINCE_NAMES = {
+  "IR-01": { en: "Gilan", fa: "گیلان" },
+  "IR-02": { en: "Mazandaran", fa: "مازندران" },
+  "IR-03": { en: "E. Azerbaijan", fa: "آذربایجان شرقی" },
+  "IR-04": { en: "W. Azerbaijan", fa: "آذربایجان غربی" },
+  "IR-05": { en: "Kermanshah", fa: "کرمانشاه" },
+  "IR-06": { en: "Khuzestan", fa: "خوزستان" },
+  "IR-07": { en: "Fars", fa: "فارس" },
+  "IR-08": { en: "Kerman", fa: "کرمان" },
+  "IR-09": { en: "Razavi Khorasan", fa: "خراسان رضوی" },
+  "IR-10": { en: "Isfahan", fa: "اصفهان" },
+  "IR-11": { en: "Sistan & Baluchestan", fa: "سیستان و بلوچستان" },
+  "IR-12": { en: "Kurdistan", fa: "کردستان" },
+  "IR-13": { en: "Hamadan", fa: "همدان" },
+  "IR-14": { en: "Chaharmahal & Bakhtiari", fa: "چهارمحال و بختیاری" },
+  "IR-15": { en: "Lorestan", fa: "لرستان" },
+  "IR-16": { en: "Ilam", fa: "ایلام" },
+  "IR-17": { en: "Kohgiluyeh & Boyer-Ahmad", fa: "کهگیلویه و بویراحمد" },
+  "IR-18": { en: "Bushehr", fa: "بوشهر" },
+  "IR-19": { en: "Zanjan", fa: "زنجان" },
+  "IR-20": { en: "Semnan", fa: "سمنان" },
+  "IR-21": { en: "Yazd", fa: "یزد" },
+  "IR-22": { en: "Hormozgan", fa: "هرمزگان" },
+  "IR-23": { en: "Tehran", fa: "تهران" },
+  "IR-24": { en: "Ardabil", fa: "اردبیل" },
+  "IR-25": { en: "Qom", fa: "قم" },
+  "IR-26": { en: "Qazvin", fa: "قزوین" },
+  "IR-27": { en: "Golestan", fa: "گلستان" },
+  "IR-28": { en: "N. Khorasan", fa: "خراسان شمالی" },
+  "IR-29": { en: "S. Khorasan", fa: "خراسان جنوبی" },
+  "IR-30": { en: "Alborz", fa: "البرز" },
+  "IR-31": { en: "Markazi", fa: "مرکزی" },
+} as const;
 
-// Helper to extract province from location string
-function extractProvince(location: string): string | null {
-  const locationLower = location.toLowerCase();
+const NAME_TO_ISO: Record<string, string> = Object.entries(PROVINCE_NAMES)
+  .reduce((acc, [iso, names]) => {
+    acc[names.en.toLowerCase()] = iso;
+    acc[names.fa] = iso;
+    return acc;
+  }, {} as Record<string, string>);
 
-  // Try to find a matching province
-  for (const province of Object.keys(PROVINCE_TO_ISO)) {
-    if (locationLower.includes(province.toLowerCase())) {
-      return province;
-    }
-  }
-
+function normalizeProvinceToIso(value?: string | null) {
+  if (!value) return null;
+  if (value.startsWith("IR-")) return value;
+  const normalized = value.trim().toLowerCase();
+  if (NAME_TO_ISO[normalized]) return NAME_TO_ISO[normalized];
   return null;
 }
 
@@ -66,9 +66,10 @@ export const getMapData = query({
 
     // Count victims by province
     for (const victim of victims) {
-      const province = extractProvince(victim.incidentLocation);
-      if (province && PROVINCE_TO_ISO[province]) {
-        const isoCode = PROVINCE_TO_ISO[province];
+      const isoCode =
+        normalizeProvinceToIso(victim.incidentProvince) ??
+        normalizeProvinceToIso(victim.incidentLocation);
+      if (isoCode) {
         if (!provinceData[isoCode]) {
           provinceData[isoCode] = { victims: 0, actions: 0, mercenaries: 0 };
         }
@@ -84,9 +85,10 @@ export const getMapData = query({
 
     // Count actions by province
     for (const action of actions) {
-      const province = extractProvince(action.location);
-      if (province && PROVINCE_TO_ISO[province]) {
-        const isoCode = PROVINCE_TO_ISO[province];
+      const isoCode =
+        normalizeProvinceToIso(action.locationProvince) ??
+        normalizeProvinceToIso(action.location);
+      if (isoCode) {
         if (!provinceData[isoCode]) {
           provinceData[isoCode] = { victims: 0, actions: 0, mercenaries: 0 };
         }
@@ -102,9 +104,10 @@ export const getMapData = query({
 
     // Count regime members by province
     for (const member of regimeMembers) {
-      const province = extractProvince(member.lastKnownLocation);
-      if (province && PROVINCE_TO_ISO[province]) {
-        const isoCode = PROVINCE_TO_ISO[province];
+      const isoCode =
+        normalizeProvinceToIso(member.lastKnownProvince) ??
+        normalizeProvinceToIso(member.lastKnownLocation);
+      if (isoCode) {
         if (!provinceData[isoCode]) {
           provinceData[isoCode] = { victims: 0, actions: 0, mercenaries: 0 };
         }
