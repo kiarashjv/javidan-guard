@@ -26,6 +26,11 @@ export const api = {
     >(
       "regimeMembers:listCurrentPaginated"
     ),
+    countCurrent: makeFunctionReference<
+      "query",
+      { searchQuery?: string },
+      number
+    >("regimeMembers:countCurrent"),
     getById: makeFunctionReference<
       "query",
       { id: string },
@@ -70,6 +75,9 @@ export const api = {
       PaginatedResult<Victim>
     >(
       "victims:listCurrentPaginated"
+    ),
+    countCurrent: makeFunctionReference<"query", { searchQuery?: string }, number>(
+      "victims:countCurrent"
     ),
     getById: makeFunctionReference<"query", { id: string }, Victim | null>(
       "victims:getById"
@@ -118,6 +126,9 @@ export const api = {
       PaginatedResult<unknown>
     >(
       "actions:listCurrentPaginated"
+    ),
+    countCurrent: makeFunctionReference<"query", { searchQuery?: string }, number>(
+      "actions:countCurrent"
     ),
     getById: makeFunctionReference<"query", { id: string }, unknown | null>(
       "actions:getById"

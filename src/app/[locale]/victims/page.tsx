@@ -19,7 +19,7 @@ export default function VictimsPage() {
   const locale = useLocale();
   const t = useTranslations("victims");
   const table = useTranslations("table");
-  const pageSize = 20;
+  const pageSize = 10;
   const [searchQuery, setSearchQuery] = useState(
     () => searchParams.get("q") ?? "",
   );
@@ -40,10 +40,16 @@ export default function VictimsPage() {
     paginationOpts: { numItems: pageSize, cursor },
     searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
   });
+  const totalCount = useQuery(api.victims.countCurrent, {
+    searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
+  });
   const isLoading = result === undefined;
   const victims = result?.page ?? [];
   const direction = locale === "fa" ? "rtl" : "ltr";
   const pageIndex = cursorStack.length + 1;
+  const pageCount = totalCount
+    ? Math.max(1, Math.ceil(totalCount / pageSize))
+    : pageIndex;
 
   const updateSearchParams = useCallback((updates: Record<string, string | null>) => {
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -207,6 +213,7 @@ export default function VictimsPage() {
             }}
           pagination={{
             pageIndex,
+            pageCount,
             hasNext: Boolean(result?.continueCursor),
             hasPrevious: cursorStack.length > 0,
             onNext: handleNext,

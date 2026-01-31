@@ -46,6 +46,7 @@ interface DataTableProps<T> {
   pageSize?: number;
   pagination?: {
     pageIndex: number;
+    pageCount?: number;
     hasNext: boolean;
     hasPrevious: boolean;
     onNext: () => void;
@@ -145,6 +146,24 @@ export function DataTable<T extends Record<string, unknown>>({
     Record<string, string>
   >(initialFilterValues ?? {});
   const pageSizeState = pageSize;
+  const computedFilters = React.useMemo(() => {
+    if (filters.length === 0) return [];
+    return filters.map((filter) => {
+      const options =
+        filter.options ??
+        Array.from(
+          new Set(
+            data
+              .map((item) => item[filter.key])
+              .filter((value) => value !== null && value !== undefined)
+              .map((value) => String(value)),
+          ),
+        )
+          .sort((a, b) => a.localeCompare(b))
+          .map((value) => ({ value, label: value }));
+      return { ...filter, options };
+    });
+  }, [data, filters]);
 
   React.useEffect(() => {
     setStatusFilter(initialStatusFilter);
@@ -367,20 +386,8 @@ export function DataTable<T extends Record<string, unknown>>({
                 )}
 
                 {/* Additional filters in mobile sheet */}
-                {filters.map((filter) => {
-                  const options =
-                    filter.options ??
-                    Array.from(
-                      new Set(
-                        data
-                          .map((item) => item[filter.key])
-                          .filter((value) => value !== null && value !== undefined)
-                          .map((value) => String(value)),
-                      ),
-                    )
-                      .sort((a, b) => a.localeCompare(b))
-                      .map((value) => ({ value, label: value }));
-
+                {computedFilters.map((filter) => {
+                  const options = filter.options ?? [];
                   return (
                     <div key={filter.key} className="space-y-2">
                       <div className="text-sm font-medium">{filter.label}</div>
@@ -439,20 +446,8 @@ export function DataTable<T extends Record<string, unknown>>({
               false,
             )}
 
-          {filters.map((filter) => {
-            const options =
-              filter.options ??
-              Array.from(
-                new Set(
-                  data
-                    .map((item) => item[filter.key])
-                    .filter((value) => value !== null && value !== undefined)
-                    .map((value) => String(value)),
-                ),
-              )
-                .sort((a, b) => a.localeCompare(b))
-                .map((value) => ({ value, label: value }));
-
+          {computedFilters.map((filter) => {
+            const options = filter.options ?? [];
             return renderFilterSelect(
               filter.key,
               filter.label,
@@ -564,7 +559,10 @@ export function DataTable<T extends Record<string, unknown>>({
       {pagination && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-muted-foreground">
-            {labels.pageCurrent?.(pageIndex) ?? labels.page(pageIndex, pageIndex)}
+            {pagination.pageCount
+              ? labels.page(pageIndex, pagination.pageCount)
+              : labels.pageCurrent?.(pageIndex) ??
+                labels.page(pageIndex, pageIndex)}
           </div>
           <div className="flex items-center gap-2">
             <button

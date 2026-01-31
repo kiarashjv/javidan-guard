@@ -19,7 +19,7 @@ export default function ActionsPage() {
   const locale = useLocale();
   const t = useTranslations("actions");
   const table = useTranslations("table");
-  const pageSize = 20;
+  const pageSize = 10;
   const [searchQuery, setSearchQuery] = useState(
     () => searchParams.get("q") ?? "",
   );
@@ -39,11 +39,17 @@ export default function ActionsPage() {
     paginationOpts: { numItems: pageSize, cursor },
     searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
   });
+  const totalCount = useQuery(api.actions.countCurrent, {
+    searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
+  });
   const isLoading = result === undefined;
   const actions = result?.page ?? [];
   const direction = locale === "fa" ? "rtl" : "ltr";
   const actionRows = (actions ?? []) as ActionRow[];
   const pageIndex = cursorStack.length + 1;
+  const pageCount = totalCount
+    ? Math.max(1, Math.ceil(totalCount / pageSize))
+    : pageIndex;
 
   const updateSearchParams = useCallback((updates: Record<string, string | null>) => {
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -196,6 +202,7 @@ export default function ActionsPage() {
             }}
           pagination={{
             pageIndex,
+            pageCount,
             hasNext: Boolean(result?.continueCursor),
             hasPrevious: cursorStack.length > 0,
             onNext: handleNext,

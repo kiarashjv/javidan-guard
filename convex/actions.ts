@@ -69,6 +69,27 @@ export const listCurrentPaginated = queryGeneric({
   },
 });
 
+export const countCurrent = queryGeneric({
+  args: { searchQuery: v.optional(v.string()) },
+  handler: async (ctx: QueryCtx, args: { searchQuery?: string }) => {
+    const searchQuery = args.searchQuery?.trim();
+    if (searchQuery) {
+      const results = await ctx.db
+        .query("actions")
+        .withSearchIndex("search_description", (q) =>
+          q.search("description", searchQuery).eq("currentVersion", true),
+        )
+        .collect();
+      return results.length;
+    }
+    const results = await ctx.db
+      .query("actions")
+      .withIndex("by_current_version", (q) => q.eq("currentVersion", true))
+      .collect();
+    return results.length;
+  },
+});
+
 export const getById = queryGeneric({
   args: { id: v.id("actions") },
   handler: async (ctx: QueryCtx, args: { id: GenericId<"actions"> }) => {
