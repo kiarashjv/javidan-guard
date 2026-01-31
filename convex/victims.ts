@@ -7,6 +7,7 @@ import {
 } from "convex/server";
 import { v, type GenericId } from "convex/values";
 import { logAudit } from "./lib/audit";
+import { formatIranLocation } from "./lib/location";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore } from "./lib/trustScore";
 import { victimCreateSchema } from "./lib/validation";
@@ -95,6 +96,8 @@ export const create = mutationGeneric({
     name: v.string(),
     age: v.number(),
     photoUrls: v.array(v.string()),
+    hometownProvince: v.string(),
+    hometownCity: v.string(),
     hometown: v.string(),
     status: v.union(
       v.literal("murdered"),
@@ -103,6 +106,8 @@ export const create = mutationGeneric({
       v.literal("released"),
       v.literal("confirmed_dead")
     ),
+    incidentProvince: v.string(),
+    incidentCity: v.string(),
     incidentDate: v.string(),
     incidentLocation: v.string(),
     circumstances: v.string(),
@@ -121,6 +126,8 @@ export const create = mutationGeneric({
       name: string;
       age: number;
       photoUrls: string[];
+      hometownProvince: string;
+      hometownCity: string;
       hometown: string;
       status:
         | "murdered"
@@ -128,6 +135,8 @@ export const create = mutationGeneric({
         | "vanished"
         | "released"
         | "confirmed_dead";
+      incidentProvince: string;
+      incidentCity: string;
       incidentDate: string;
       incidentLocation: string;
       circumstances: string;
@@ -148,14 +157,27 @@ export const create = mutationGeneric({
       linkedPerpetrators: args.linkedPerpetrators,
     });
 
+    const hometownLocation = formatIranLocation(
+      parsed.hometownProvince,
+      parsed.hometownCity,
+    );
+    const incidentLocation = formatIranLocation(
+      parsed.incidentProvince,
+      parsed.incidentCity,
+    );
+
     const id = await ctx.db.insert("victims", {
       name: parsed.name,
       age: parsed.age,
       photoUrls: parsed.photoUrls,
-      hometown: parsed.hometown,
+      hometownProvince: parsed.hometownProvince,
+      hometownCity: parsed.hometownCity,
+      hometown: hometownLocation,
       status: parsed.status,
+      incidentProvince: parsed.incidentProvince,
+      incidentCity: parsed.incidentCity,
       incidentDate: parsed.incidentDate,
-      incidentLocation: parsed.incidentLocation,
+      incidentLocation: incidentLocation,
       circumstances: parsed.circumstances,
       evidenceLinks: parsed.evidenceLinks,
       newsReports: parsed.newsReports,

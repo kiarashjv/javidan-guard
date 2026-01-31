@@ -42,6 +42,8 @@ export const api = {
         position: string;
         rank: string;
         status: RegimeMember["status"];
+        lastKnownProvince: string;
+        lastKnownCity: string;
         lastKnownLocation: string;
         createdBySession: string;
         ipHash: string;
@@ -78,8 +80,12 @@ export const api = {
         name: string;
         age: number;
         photoUrls: string[];
+        hometownProvince: string;
+        hometownCity: string;
         hometown: string;
         status: Victim["status"];
+        incidentProvince: string;
+        incidentCity: string;
         incidentDate: string;
         incidentLocation: string;
         circumstances: string;
@@ -122,6 +128,8 @@ export const api = {
         perpetratorId: string;
         victimIds: string[];
         date: string;
+        locationProvince: string;
+        locationCity: string;
         location: string;
         description: string;
         actionType: "killing" | "torture" | "arrest" | "assault" | "other";

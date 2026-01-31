@@ -27,7 +27,10 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/convex-api";
 import { actionCreateSchema, actionFormSchema } from "@/lib/client-validation";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { formatIranLocation } from "@/lib/location";
 import { getClientMeta, getSessionId } from "@/lib/session";
+import { iranCities } from "@/data/iran-cities";
 
 export default function ActionCreatePage() {
   const locale = useLocale();
@@ -43,7 +46,8 @@ export default function ActionCreatePage() {
     defaultValues: {
       actionType: "killing",
       date: "",
-      location: "",
+      locationProvince: "",
+      locationCity: "",
       description: "",
       perpetratorId: "",
       victimIds: "",
@@ -101,6 +105,7 @@ export default function ActionCreatePage() {
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
 
+    const location = formatIranLocation(values.locationProvince, values.locationCity);
     const payload = {
       actionType: values.actionType as
         | "killing"
@@ -109,7 +114,9 @@ export default function ActionCreatePage() {
         | "assault"
         | "other",
       date: values.date.trim(),
-      location: values.location.trim(),
+      locationProvince: values.locationProvince.trim(),
+      locationCity: values.locationCity.trim(),
+      location: location,
       description: values.description.trim(),
       perpetratorId: values.perpetratorId.trim(),
       victimIds: values.victimIds
@@ -201,12 +208,45 @@ export default function ActionCreatePage() {
             />
             <FormField
               control={form.control}
-              name="location"
+              name="locationProvince"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("form.location")}</FormLabel>
+                  <FormLabel>{t("form.province")}</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <SearchableSelect
+                      value={field.value}
+                      options={Object.keys(iranCities)}
+                      placeholder={t("form.provincePlaceholder")}
+                      searchPlaceholder={t("form.searchProvince")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        form.setValue("locationCity", "", { shouldDirty: true });
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="locationCity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("form.city")}</FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      value={field.value}
+                      options={iranCities[form.watch("locationProvince")] ?? []}
+                      placeholder={t("form.cityPlaceholder")}
+                      searchPlaceholder={t("form.searchCity")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      disabled={!form.watch("locationProvince")}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

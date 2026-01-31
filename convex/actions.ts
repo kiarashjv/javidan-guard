@@ -7,6 +7,7 @@ import {
 } from "convex/server";
 import { v, type GenericId } from "convex/values";
 import { logAudit } from "./lib/audit";
+import { formatIranLocation } from "./lib/location";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore } from "./lib/trustScore";
 import { actionCreateSchema } from "./lib/validation";
@@ -95,6 +96,8 @@ export const create = mutationGeneric({
     perpetratorId: v.id("regimeMembers"),
     victimIds: v.array(v.id("victims")),
     date: v.string(),
+    locationProvince: v.string(),
+    locationCity: v.string(),
     location: v.string(),
     description: v.string(),
     actionType: v.union(
@@ -119,6 +122,8 @@ export const create = mutationGeneric({
       perpetratorId: GenericId<"regimeMembers">;
       victimIds: GenericId<"victims">[];
       date: string;
+      locationProvince: string;
+      locationCity: string;
       location: string;
       description: string;
       actionType: "killing" | "torture" | "arrest" | "assault" | "other";
@@ -140,11 +145,18 @@ export const create = mutationGeneric({
       victimIds: args.victimIds,
     });
 
+    const location = formatIranLocation(
+      parsed.locationProvince,
+      parsed.locationCity,
+    );
+
     const id = await ctx.db.insert("actions", {
       perpetratorId: parsed.perpetratorId,
       victimIds: parsed.victimIds,
       date: parsed.date,
-      location: parsed.location,
+      locationProvince: parsed.locationProvince,
+      locationCity: parsed.locationCity,
+      location: location,
       description: parsed.description,
       actionType: parsed.actionType,
       evidenceUrls: parsed.evidenceUrls,

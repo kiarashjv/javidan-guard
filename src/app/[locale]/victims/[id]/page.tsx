@@ -31,6 +31,9 @@ import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
 import { useToast } from "@/hooks/use-toast";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { iranCities } from "@/data/iran-cities";
+import { formatIranLocation } from "@/lib/location";
 
 export default function VictimDetailPage({
   params,
@@ -84,8 +87,12 @@ export default function VictimDetailPage({
       new Set([
         "name",
         "status",
+        "hometownProvince",
+        "hometownCity",
         "hometown",
         "incidentDate",
+        "incidentProvince",
+        "incidentCity",
         "incidentLocation",
         "circumstances",
         "photoUrls",
@@ -95,9 +102,13 @@ export default function VictimDetailPage({
   const fieldLabels = useMemo(
     () => ({
       name: victimsT("form.name"),
+      hometownProvince: victimsT("form.hometownProvince"),
+      hometownCity: victimsT("form.hometownCity"),
       hometown: victimsT("form.hometown"),
       status: victimsT("form.status"),
       incidentDate: victimsT("form.incidentDate"),
+      incidentProvince: victimsT("form.incidentProvince"),
+      incidentCity: victimsT("form.incidentCity"),
       incidentLocation: victimsT("form.incidentLocation"),
       circumstances: victimsT("form.circumstances"),
       evidenceLinks: victimsT("form.evidenceLinks"),
@@ -118,10 +129,12 @@ export default function VictimDetailPage({
 
   const [formState, setFormState] = useState({
     name: "",
-    hometown: "",
+    hometownProvince: "",
+    hometownCity: "",
     status: "",
     incidentDate: "",
-    incidentLocation: "",
+    incidentProvince: "",
+    incidentCity: "",
     circumstances: "",
     photoUrls: "",
     reason: "",
@@ -138,8 +151,19 @@ export default function VictimDetailPage({
 
     const proposedChanges: Record<string, unknown> = {};
     if (formState.name.trim().length > 0) proposedChanges.name = formState.name.trim();
-    if (formState.hometown.trim().length > 0) {
-      proposedChanges.hometown = formState.hometown.trim();
+    const nextHometownProvince = formState.hometownProvince.trim();
+    const nextHometownCity = formState.hometownCity.trim();
+    if (nextHometownProvince.length > 0) {
+      proposedChanges.hometownProvince = nextHometownProvince;
+    }
+    if (nextHometownCity.length > 0) {
+      proposedChanges.hometownCity = nextHometownCity;
+    }
+    if (nextHometownProvince.length > 0 || nextHometownCity.length > 0) {
+      proposedChanges.hometown = formatIranLocation(
+        nextHometownProvince.length > 0 ? nextHometownProvince : victim.hometownProvince,
+        nextHometownCity.length > 0 ? nextHometownCity : victim.hometownCity,
+      );
     }
     if (formState.status.trim().length > 0) {
       proposedChanges.status = formState.status.trim();
@@ -147,8 +171,19 @@ export default function VictimDetailPage({
     if (formState.incidentDate.trim().length > 0) {
       proposedChanges.incidentDate = formState.incidentDate.trim();
     }
-    if (formState.incidentLocation.trim().length > 0) {
-      proposedChanges.incidentLocation = formState.incidentLocation.trim();
+    const nextIncidentProvince = formState.incidentProvince.trim();
+    const nextIncidentCity = formState.incidentCity.trim();
+    if (nextIncidentProvince.length > 0) {
+      proposedChanges.incidentProvince = nextIncidentProvince;
+    }
+    if (nextIncidentCity.length > 0) {
+      proposedChanges.incidentCity = nextIncidentCity;
+    }
+    if (nextIncidentProvince.length > 0 || nextIncidentCity.length > 0) {
+      proposedChanges.incidentLocation = formatIranLocation(
+        nextIncidentProvince.length > 0 ? nextIncidentProvince : victim.incidentProvince,
+        nextIncidentCity.length > 0 ? nextIncidentCity : victim.incidentCity,
+      );
     }
     if (formState.circumstances.trim().length > 0) {
       proposedChanges.circumstances = formState.circumstances.trim();
@@ -189,10 +224,12 @@ export default function VictimDetailPage({
 
     setFormState({
       name: "",
-      hometown: "",
+      hometownProvince: "",
+      hometownCity: "",
       status: "",
       incidentDate: "",
-      incidentLocation: "",
+      incidentProvince: "",
+      incidentCity: "",
       circumstances: "",
       photoUrls: "",
       reason: "",
@@ -447,19 +484,51 @@ export default function VictimDetailPage({
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="update-victim-hometown">{t("propose.hometown")}</Label>
-                <Input
-                  id="update-victim-hometown"
-                  value={formState.hometown}
-                  disabled={isFieldPending("hometown")}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, hometown: event.target.value }))
+                <Label>{t("propose.hometownProvince")}</Label>
+                <SearchableSelect
+                  value={formState.hometownProvince}
+                  options={Object.keys(iranCities)}
+                  placeholder={victimsT("form.provincePlaceholder")}
+                  searchPlaceholder={victimsT("form.searchProvince")}
+                  emptyLabel={victimsT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={isFieldPending("hometownProvince")}
+                  onChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      hometownProvince: value,
+                      hometownCity: "",
+                    }))
+                  }
+                />
+                {isFieldPending("hometownProvince") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label>{t("propose.hometownCity")}</Label>
+                <SearchableSelect
+                  value={formState.hometownCity}
+                  options={iranCities[formState.hometownProvince] ?? []}
+                  placeholder={victimsT("form.cityPlaceholder")}
+                  searchPlaceholder={victimsT("form.searchCity")}
+                  emptyLabel={victimsT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={
+                    !formState.hometownProvince ||
+                    isFieldPending("hometownCity")
+                  }
+                  onChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      hometownCity: value,
+                    }))
                   }
                 />
                 <p className="text-xs text-muted-foreground">
                   {currentValueLabel(victim.hometown)}
                 </p>
-                {isFieldPending("hometown") ? (
+                {isFieldPending("hometownCity") ? (
                   <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
                 ) : null}
               </div>
@@ -510,19 +579,51 @@ export default function VictimDetailPage({
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="update-victim-location">{t("propose.incidentLocation")}</Label>
-                <Input
-                  id="update-victim-location"
-                  value={formState.incidentLocation}
-                  disabled={isFieldPending("incidentLocation")}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, incidentLocation: event.target.value }))
+                <Label>{t("propose.incidentProvince")}</Label>
+                <SearchableSelect
+                  value={formState.incidentProvince}
+                  options={Object.keys(iranCities)}
+                  placeholder={victimsT("form.provincePlaceholder")}
+                  searchPlaceholder={victimsT("form.searchProvince")}
+                  emptyLabel={victimsT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={isFieldPending("incidentProvince")}
+                  onChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      incidentProvince: value,
+                      incidentCity: "",
+                    }))
+                  }
+                />
+                {isFieldPending("incidentProvince") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label>{t("propose.incidentCity")}</Label>
+                <SearchableSelect
+                  value={formState.incidentCity}
+                  options={iranCities[formState.incidentProvince] ?? []}
+                  placeholder={victimsT("form.cityPlaceholder")}
+                  searchPlaceholder={victimsT("form.searchCity")}
+                  emptyLabel={victimsT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={
+                    !formState.incidentProvince ||
+                    isFieldPending("incidentCity")
+                  }
+                  onChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      incidentCity: value,
+                    }))
                   }
                 />
                 <p className="text-xs text-muted-foreground">
                   {currentValueLabel(victim.incidentLocation)}
                 </p>
-                {isFieldPending("incidentLocation") ? (
+                {isFieldPending("incidentCity") ? (
                   <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
                 ) : null}
               </div>

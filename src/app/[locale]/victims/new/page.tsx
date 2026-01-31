@@ -26,9 +26,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/convex-api";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { victimCreateSchema, victimFormSchema } from "@/lib/client-validation";
+import { formatIranLocation } from "@/lib/location";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import type { VictimStatus } from "@/types/records";
+import { iranCities } from "@/data/iran-cities";
 
 export default function VictimCreatePage() {
   const locale = useLocale();
@@ -45,10 +48,12 @@ export default function VictimCreatePage() {
     defaultValues: {
       name: "",
       age: 0,
-      hometown: "",
+      hometownProvince: "",
+      hometownCity: "",
       status: "murdered",
+      incidentProvince: "",
+      incidentCity: "",
       incidentDate: "",
-      incidentLocation: "",
       circumstances: "",
       evidenceLinks: "",
       newsReports: "",
@@ -106,6 +111,14 @@ export default function VictimCreatePage() {
     const clientMeta = getClientMeta();
     const parsed = victimFormSchema.parse(values);
 
+    const hometownLocation = formatIranLocation(
+      parsed.hometownProvince,
+      parsed.hometownCity,
+    );
+    const incidentLocation = formatIranLocation(
+      parsed.incidentProvince,
+      parsed.incidentCity,
+    );
     const payload = {
       name: parsed.name.trim(),
       age: parsed.age,
@@ -113,10 +126,14 @@ export default function VictimCreatePage() {
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean),
-      hometown: parsed.hometown.trim(),
+      hometownProvince: parsed.hometownProvince.trim(),
+      hometownCity: parsed.hometownCity.trim(),
+      hometown: hometownLocation,
       status: parsed.status as VictimStatus,
+      incidentProvince: parsed.incidentProvince.trim(),
+      incidentCity: parsed.incidentCity.trim(),
       incidentDate: parsed.incidentDate.trim(),
-      incidentLocation: parsed.incidentLocation.trim(),
+      incidentLocation: incidentLocation,
       circumstances: parsed.circumstances.trim(),
       evidenceLinks: parsed.evidenceLinks
         .split(",")
@@ -305,12 +322,23 @@ export default function VictimCreatePage() {
             />
             <FormField
               control={form.control}
-              name="hometown"
+              name="hometownProvince"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("form.hometown")}</FormLabel>
+                  <FormLabel>{t("form.hometownProvince")}</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <SearchableSelect
+                      value={field.value}
+                      options={Object.keys(iranCities)}
+                      placeholder={t("form.provincePlaceholder")}
+                      searchPlaceholder={t("form.searchProvince")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        form.setValue("hometownCity", "", { shouldDirty: true });
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -318,12 +346,67 @@ export default function VictimCreatePage() {
             />
             <FormField
               control={form.control}
-              name="incidentLocation"
+              name="hometownCity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("form.incidentLocation")}</FormLabel>
+                  <FormLabel>{t("form.hometownCity")}</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <SearchableSelect
+                      value={field.value}
+                      options={iranCities[form.watch("hometownProvince")] ?? []}
+                      placeholder={t("form.cityPlaceholder")}
+                      searchPlaceholder={t("form.searchCity")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      disabled={!form.watch("hometownProvince")}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="incidentProvince"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("form.incidentProvince")}</FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      value={field.value}
+                      options={Object.keys(iranCities)}
+                      placeholder={t("form.provincePlaceholder")}
+                      searchPlaceholder={t("form.searchProvince")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        form.setValue("incidentCity", "", { shouldDirty: true });
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="incidentCity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("form.incidentCity")}</FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      value={field.value}
+                      options={iranCities[form.watch("incidentProvince")] ?? []}
+                      placeholder={t("form.cityPlaceholder")}
+                      searchPlaceholder={t("form.searchCity")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      disabled={!form.watch("incidentProvince")}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

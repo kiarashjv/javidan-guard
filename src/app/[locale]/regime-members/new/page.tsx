@@ -26,12 +26,15 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/convex-api";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import {
   regimeMemberCreateSchema,
   regimeMemberFormSchema,
 } from "@/lib/client-validation";
+import { formatIranLocation } from "@/lib/location";
 import { getClientMeta, getSessionId } from "@/lib/session";
 import type { RegimeMemberStatus } from "@/types/records";
+import { iranCities } from "@/data/iran-cities";
 
 export default function RegimeMemberCreatePage() {
   const locale = useLocale();
@@ -51,7 +54,8 @@ export default function RegimeMemberCreatePage() {
       position: "",
       rank: "",
       status: "active",
-      lastKnownLocation: "",
+      lastKnownProvince: "",
+      lastKnownCity: "",
       aliases: "",
       photoUrls: "",
       reason: "",
@@ -104,6 +108,10 @@ export default function RegimeMemberCreatePage() {
     const sessionId = getSessionId();
     const clientMeta = getClientMeta();
 
+    const lastKnownLocation = formatIranLocation(
+      values.lastKnownProvince,
+      values.lastKnownCity,
+    );
     const payload = {
       name: values.name.trim(),
       aliases: values.aliases
@@ -119,7 +127,9 @@ export default function RegimeMemberCreatePage() {
       position: values.position.trim(),
       rank: values.rank.trim(),
       status: values.status as RegimeMemberStatus,
-      lastKnownLocation: values.lastKnownLocation.trim(),
+      lastKnownProvince: values.lastKnownProvince.trim(),
+      lastKnownCity: values.lastKnownCity.trim(),
+      lastKnownLocation: lastKnownLocation,
       createdBySession: sessionId,
       ipHash: clientMeta.ipHash,
       userAgent: clientMeta.userAgent,
@@ -241,12 +251,47 @@ export default function RegimeMemberCreatePage() {
             />
             <FormField
               control={form.control}
-              name="lastKnownLocation"
+              name="lastKnownProvince"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("form.location")}</FormLabel>
+                  <FormLabel>{t("form.province")}</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <SearchableSelect
+                      value={field.value}
+                      options={Object.keys(iranCities)}
+                      placeholder={t("form.provincePlaceholder")}
+                      searchPlaceholder={t("form.searchProvince")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        form.setValue("lastKnownCity", "", {
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lastKnownCity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("form.city")}</FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      value={field.value}
+                      options={iranCities[form.watch("lastKnownProvince")] ?? []}
+                      placeholder={t("form.cityPlaceholder")}
+                      searchPlaceholder={t("form.searchCity")}
+                      emptyLabel={t("form.noResults")}
+                      direction={direction}
+                      disabled={!form.watch("lastKnownProvince")}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

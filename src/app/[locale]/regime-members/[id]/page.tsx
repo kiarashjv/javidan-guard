@@ -31,6 +31,9 @@ import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
 import { useToast } from "@/hooks/use-toast";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { iranCities } from "@/data/iran-cities";
+import { formatIranLocation } from "@/lib/location";
 
 export default function RegimeMemberDetailPage({
   params,
@@ -60,7 +63,10 @@ export default function RegimeMemberDetailPage({
         { update: PendingUpdateRecord; proposedValue: unknown }
       >;
     }
-    const result: Record<string, { update: PendingUpdateRecord; proposedValue: unknown }> = {};
+    const result: Record<
+      string,
+      { update: PendingUpdateRecord; proposedValue: unknown }
+    > = {};
     for (const update of pendingUpdates) {
       let parsed: Record<string, unknown>;
       try {
@@ -88,10 +94,12 @@ export default function RegimeMemberDetailPage({
         "unit",
         "position",
         "rank",
+        "lastKnownProvince",
+        "lastKnownCity",
         "lastKnownLocation",
         "photoUrls",
       ]),
-    []
+    [],
   );
   const fieldLabels = useMemo(
     () => ({
@@ -101,13 +109,14 @@ export default function RegimeMemberDetailPage({
       position: membersT("form.position"),
       rank: membersT("form.rank"),
       status: membersT("form.status"),
+      lastKnownProvince: membersT("form.province"),
+      lastKnownCity: membersT("form.city"),
       lastKnownLocation: membersT("form.location"),
       aliases: membersT("form.aliases"),
       photoUrls: membersT("form.photos"),
     }),
-    [membersT]
+    [membersT],
   );
-
 
   const [formState, setFormState] = useState({
     name: "",
@@ -116,7 +125,8 @@ export default function RegimeMemberDetailPage({
     position: "",
     rank: "",
     status: "",
-    lastKnownLocation: "",
+    lastKnownProvince: "",
+    lastKnownCity: "",
     photoUrls: "",
     reason: "",
   });
@@ -131,7 +141,8 @@ export default function RegimeMemberDetailPage({
     }
 
     const proposedChanges: Record<string, unknown> = {};
-    if (formState.name.trim().length > 0) proposedChanges.name = formState.name.trim();
+    if (formState.name.trim().length > 0)
+      proposedChanges.name = formState.name.trim();
     if (formState.organization.trim().length > 0) {
       proposedChanges.organization = formState.organization.trim();
     }
@@ -147,8 +158,19 @@ export default function RegimeMemberDetailPage({
     if (formState.status.trim().length > 0) {
       proposedChanges.status = formState.status.trim();
     }
-    if (formState.lastKnownLocation.trim().length > 0) {
-      proposedChanges.lastKnownLocation = formState.lastKnownLocation.trim();
+    const nextProvince = formState.lastKnownProvince.trim();
+    const nextCity = formState.lastKnownCity.trim();
+    if (nextProvince.length > 0) {
+      proposedChanges.lastKnownProvince = nextProvince;
+    }
+    if (nextCity.length > 0) {
+      proposedChanges.lastKnownCity = nextCity;
+    }
+    if (nextProvince.length > 0 || nextCity.length > 0) {
+      proposedChanges.lastKnownLocation = formatIranLocation(
+        nextProvince.length > 0 ? nextProvince : member.lastKnownProvince,
+        nextCity.length > 0 ? nextCity : member.lastKnownCity,
+      );
     }
     if (formState.photoUrls.trim().length > 0) {
       proposedChanges.photoUrls = formState.photoUrls
@@ -191,7 +213,8 @@ export default function RegimeMemberDetailPage({
       position: "",
       rank: "",
       status: "",
-      lastKnownLocation: "",
+      lastKnownProvince: "",
+      lastKnownCity: "",
       photoUrls: "",
       reason: "",
     });
@@ -284,10 +307,15 @@ export default function RegimeMemberDetailPage({
           </div>
           {member.photoUrls?.length ? (
             <div className="space-y-2">
-              <div className="text-xs text-muted-foreground">{membersT("form.photos")}</div>
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.photos")}
+              </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {member.photoUrls.map((url) => (
-                  <div key={url} className="overflow-hidden rounded-lg border border-zinc-200">
+                  <div
+                    key={url}
+                    className="overflow-hidden rounded-lg border border-zinc-200"
+                  >
                     <Image
                       src={url}
                       alt={member.name}
@@ -303,7 +331,9 @@ export default function RegimeMemberDetailPage({
           ) : null}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <div className="text-xs text-muted-foreground">{membersT("form.name")}</div>
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.name")}
+              </div>
               <div className="text-base text-foreground">{member.name}</div>
               {pendingByField.name ? (
                 <PendingFieldUpdate
@@ -330,16 +360,22 @@ export default function RegimeMemberDetailPage({
               <div className="text-xs text-muted-foreground">
                 {membersT("form.organization")}
               </div>
-              <div className="text-base text-foreground">{member.organization}</div>
+              <div className="text-base text-foreground">
+                {member.organization}
+              </div>
               {pendingByField.organization ? (
                 <PendingFieldUpdate
                   update={pendingByField.organization.update}
-                  proposedValue={String(pendingByField.organization.proposedValue)}
+                  proposedValue={String(
+                    pendingByField.organization.proposedValue,
+                  )}
                 />
               ) : null}
             </div>
             <div className="space-y-2">
-              <div className="text-xs text-muted-foreground">{membersT("form.unit")}</div>
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.unit")}
+              </div>
               <div className="text-base text-foreground">{member.unit}</div>
               {pendingByField.unit ? (
                 <PendingFieldUpdate
@@ -361,7 +397,9 @@ export default function RegimeMemberDetailPage({
               ) : null}
             </div>
             <div className="space-y-2">
-              <div className="text-xs text-muted-foreground">{membersT("form.rank")}</div>
+              <div className="text-xs text-muted-foreground">
+                {membersT("form.rank")}
+              </div>
               <div className="text-base text-foreground">{member.rank}</div>
               {pendingByField.rank ? (
                 <PendingFieldUpdate
@@ -374,11 +412,15 @@ export default function RegimeMemberDetailPage({
               <div className="text-xs text-muted-foreground">
                 {membersT("form.location")}
               </div>
-              <div className="text-base text-foreground">{member.lastKnownLocation}</div>
+              <div className="text-base text-foreground">
+                {member.lastKnownLocation}
+              </div>
               {pendingByField.lastKnownLocation ? (
                 <PendingFieldUpdate
                   update={pendingByField.lastKnownLocation.update}
-                  proposedValue={String(pendingByField.lastKnownLocation.proposedValue)}
+                  proposedValue={String(
+                    pendingByField.lastKnownLocation.proposedValue,
+                  )}
                 />
               ) : null}
             </div>
@@ -388,23 +430,23 @@ export default function RegimeMemberDetailPage({
                   {pendingT("fieldPending")} · {membersT("form.photos")}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {normalizePhotoUrls(pendingByField.photoUrls.proposedValue).map(
-                    (url) => (
-                      <div
-                        key={url}
-                        className="overflow-hidden rounded-lg border border-amber-200"
-                      >
-                        <Image
-                          src={url}
-                          alt={member.name}
-                          width={640}
-                          height={360}
-                          className="h-40 w-full object-cover"
-                          unoptimized
-                        />
-                      </div>
-                    )
-                  )}
+                  {normalizePhotoUrls(
+                    pendingByField.photoUrls.proposedValue,
+                  ).map((url) => (
+                    <div
+                      key={url}
+                      className="overflow-hidden rounded-lg border border-amber-200"
+                    >
+                      <Image
+                        src={url}
+                        alt={member.name}
+                        width={640}
+                        height={360}
+                        className="h-40 w-full object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : null}
@@ -451,15 +493,22 @@ export default function RegimeMemberDetailPage({
                   value={formState.name}
                   disabled={isFieldPending("name")}
                   onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, name: event.target.value }))
+                    setFormState((prev) => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
                   }
                 />
                 {isFieldPending("name") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="update-organization">{t("propose.organization")}</Label>
+                <Label htmlFor="update-organization">
+                  {t("propose.organization")}
+                </Label>
                 <Input
                   id="update-organization"
                   value={formState.organization}
@@ -472,7 +521,9 @@ export default function RegimeMemberDetailPage({
                   }
                 />
                 {isFieldPending("organization") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
@@ -482,11 +533,16 @@ export default function RegimeMemberDetailPage({
                   value={formState.unit}
                   disabled={isFieldPending("unit")}
                   onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, unit: event.target.value }))
+                    setFormState((prev) => ({
+                      ...prev,
+                      unit: event.target.value,
+                    }))
                   }
                 />
                 {isFieldPending("unit") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
@@ -503,7 +559,9 @@ export default function RegimeMemberDetailPage({
                   }
                 />
                 {isFieldPending("position") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
@@ -513,11 +571,16 @@ export default function RegimeMemberDetailPage({
                   value={formState.rank}
                   disabled={isFieldPending("rank")}
                   onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, rank: event.target.value }))
+                    setFormState((prev) => ({
+                      ...prev,
+                      rank: event.target.value,
+                    }))
                   }
                 />
                 {isFieldPending("rank") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
@@ -533,32 +596,77 @@ export default function RegimeMemberDetailPage({
                     <SelectValue placeholder={t("propose.status")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">{membersT("status.active")}</SelectItem>
-                    <SelectItem value="arrested">{membersT("status.arrested")}</SelectItem>
-                    <SelectItem value="fled">{membersT("status.fled")}</SelectItem>
-                    <SelectItem value="deceased">{membersT("status.deceased")}</SelectItem>
-                    <SelectItem value="unknown">{membersT("status.unknown")}</SelectItem>
+                    <SelectItem value="active">
+                      {membersT("status.active")}
+                    </SelectItem>
+                    <SelectItem value="arrested">
+                      {membersT("status.arrested")}
+                    </SelectItem>
+                    <SelectItem value="fled">
+                      {membersT("status.fled")}
+                    </SelectItem>
+                    <SelectItem value="deceased">
+                      {membersT("status.deceased")}
+                    </SelectItem>
+                    <SelectItem value="unknown">
+                      {membersT("status.unknown")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 {isFieldPending("status") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="update-location">{t("propose.location")}</Label>
-                <Input
-                  id="update-location"
-                  value={formState.lastKnownLocation}
-                  disabled={isFieldPending("lastKnownLocation")}
-                  onChange={(event) =>
+              <div className="space-y-2">
+                <Label>{t("propose.province")}</Label>
+                <SearchableSelect
+                  value={formState.lastKnownProvince}
+                  options={Object.keys(iranCities)}
+                  placeholder={membersT("form.provincePlaceholder")}
+                  searchPlaceholder={membersT("form.searchProvince")}
+                  emptyLabel={membersT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={isFieldPending("lastKnownProvince")}
+                  onChange={(value) =>
                     setFormState((prev) => ({
                       ...prev,
-                      lastKnownLocation: event.target.value,
+                      lastKnownProvince: value,
+                      lastKnownCity: "",
                     }))
                   }
                 />
-                {isFieldPending("lastKnownLocation") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                {isFieldPending("lastKnownProvince") ? (
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label>{t("propose.city")}</Label>
+                <SearchableSelect
+                  value={formState.lastKnownCity}
+                  options={iranCities[formState.lastKnownProvince] ?? []}
+                  placeholder={membersT("form.cityPlaceholder")}
+                  searchPlaceholder={membersT("form.searchCity")}
+                  emptyLabel={membersT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={
+                    !formState.lastKnownProvince ||
+                    isFieldPending("lastKnownCity")
+                  }
+                  onChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      lastKnownCity: value,
+                    }))
+                  }
+                />
+                {isFieldPending("lastKnownCity") ? (
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -568,7 +676,10 @@ export default function RegimeMemberDetailPage({
                   value={formState.photoUrls}
                   disabled={isFieldPending("photoUrls")}
                   onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, photoUrls: event.target.value }))
+                    setFormState((prev) => ({
+                      ...prev,
+                      photoUrls: event.target.value,
+                    }))
                   }
                 />
                 <Input
@@ -580,10 +691,14 @@ export default function RegimeMemberDetailPage({
                   disabled={isUploading || isFieldPending("photoUrls")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {isUploading ? membersT("form.uploading") : membersT("form.uploadPhotos")}
+                  {isUploading
+                    ? membersT("form.uploading")
+                    : membersT("form.uploadPhotos")}
                 </p>
                 {isFieldPending("photoUrls") ? (
-                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                  <p className="text-xs text-amber-600">
+                    {pendingT("fieldLocked")}
+                  </p>
                 ) : null}
                 {uploadError ? (
                   <p className="text-xs text-destructive">{uploadError}</p>
@@ -597,7 +712,10 @@ export default function RegimeMemberDetailPage({
                 id="update-reason"
                 value={formState.reason}
                 onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, reason: event.target.value }))
+                  setFormState((prev) => ({
+                    ...prev,
+                    reason: event.target.value,
+                  }))
                 }
               />
             </div>

@@ -7,6 +7,7 @@ import {
 } from "convex/server";
 import { v, type GenericId } from "convex/values";
 import { logAudit } from "./lib/audit";
+import { formatIranLocation } from "./lib/location";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore } from "./lib/trustScore";
 import { regimeMemberCreateSchema } from "./lib/validation";
@@ -112,6 +113,8 @@ export const create = mutationGeneric({
       v.literal("deceased"),
       v.literal("unknown")
     ),
+    lastKnownProvince: v.string(),
+    lastKnownCity: v.string(),
     lastKnownLocation: v.string(),
     createdBySession: v.string(),
     ipHash: v.string(),
@@ -129,6 +132,8 @@ export const create = mutationGeneric({
       position: string;
       rank: string;
       status: "active" | "arrested" | "fled" | "deceased" | "unknown";
+      lastKnownProvince: string;
+      lastKnownCity: string;
       lastKnownLocation: string;
       createdBySession: string;
       ipHash: string;
@@ -140,6 +145,11 @@ export const create = mutationGeneric({
     const now = Date.now();
     const parsed = regimeMemberCreateSchema.parse(args);
 
+    const location = formatIranLocation(
+      parsed.lastKnownProvince,
+      parsed.lastKnownCity,
+    );
+
     const id = await ctx.db.insert("regimeMembers", {
       name: parsed.name,
       aliases: parsed.aliases,
@@ -149,7 +159,9 @@ export const create = mutationGeneric({
       position: parsed.position,
       rank: parsed.rank,
       status: parsed.status,
-      lastKnownLocation: parsed.lastKnownLocation,
+      lastKnownProvince: parsed.lastKnownProvince,
+      lastKnownCity: parsed.lastKnownCity,
+      lastKnownLocation: location,
       createdAt: now,
       createdBySession: parsed.createdBySession,
       currentVersion: true,

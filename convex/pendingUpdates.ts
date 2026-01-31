@@ -6,6 +6,7 @@ import { logAudit } from "./lib/audit";
 import { checkAndRecordContribution } from "./lib/rateLimit";
 import { adjustTrustScore, recordVerification } from "./lib/trustScore";
 import { validatePendingUpdate } from "./lib/validation";
+import { formatIranLocation } from "./lib/location";
 
 const EXPIRES_IN_DAYS = 30;
 
@@ -254,9 +255,19 @@ async function approveUpdate(
     } = typedTarget;
     void _unusedId;
     void _unusedCreation;
+    const hasLocationUpdate =
+      proposed.lastKnownProvince !== undefined ||
+      proposed.lastKnownCity !== undefined;
+    const resolvedLocation = hasLocationUpdate
+      ? formatIranLocation(
+          proposed.lastKnownProvince ?? base.lastKnownProvince,
+          proposed.lastKnownCity ?? base.lastKnownCity,
+        )
+      : proposed.lastKnownLocation ?? base.lastKnownLocation;
     const newDocId = await ctx.db.insert("regimeMembers", {
       ...base,
       ...proposed,
+      lastKnownLocation: resolvedLocation,
       currentVersion: true,
       supersededBy: null,
       previousVersions: [...typedTarget.previousVersions, typedTarget._id],
@@ -275,12 +286,32 @@ async function approveUpdate(
     } = typedTarget;
     void _unusedId;
     void _unusedCreation;
+    const hasHometownUpdate =
+      proposed.hometownProvince !== undefined ||
+      proposed.hometownCity !== undefined;
+    const resolvedHometown = hasHometownUpdate
+      ? formatIranLocation(
+          proposed.hometownProvince ?? base.hometownProvince,
+          proposed.hometownCity ?? base.hometownCity,
+        )
+      : proposed.hometown ?? base.hometown;
+    const hasIncidentUpdate =
+      proposed.incidentProvince !== undefined ||
+      proposed.incidentCity !== undefined;
+    const resolvedIncidentLocation = hasIncidentUpdate
+      ? formatIranLocation(
+          proposed.incidentProvince ?? base.incidentProvince,
+          proposed.incidentCity ?? base.incidentCity,
+        )
+      : proposed.incidentLocation ?? base.incidentLocation;
     const resolvedLinkedPerpetrators = proposed.linkedPerpetrators
       ? (proposed.linkedPerpetrators as Id<"regimeMembers">[])
       : base.linkedPerpetrators;
     const newDocId = await ctx.db.insert("victims", {
       ...base,
       ...proposed,
+      hometown: resolvedHometown,
+      incidentLocation: resolvedIncidentLocation,
       linkedPerpetrators: resolvedLinkedPerpetrators,
       currentVersion: true,
       supersededBy: null,
@@ -300,6 +331,15 @@ async function approveUpdate(
     } = typedTarget;
     void _unusedId;
     void _unusedCreation;
+    const hasLocationUpdate =
+      proposed.locationProvince !== undefined ||
+      proposed.locationCity !== undefined;
+    const resolvedLocation = hasLocationUpdate
+      ? formatIranLocation(
+          proposed.locationProvince ?? base.locationProvince,
+          proposed.locationCity ?? base.locationCity,
+        )
+      : proposed.location ?? base.location;
     const resolvedPerpetratorId = proposed.perpetratorId
       ? (proposed.perpetratorId as Id<"regimeMembers">)
       : base.perpetratorId;
@@ -309,6 +349,7 @@ async function approveUpdate(
     const newDocId = await ctx.db.insert("actions", {
       ...base,
       ...proposed,
+      location: resolvedLocation,
       perpetratorId: resolvedPerpetratorId,
       victimIds: resolvedVictimIds,
       currentVersion: true,

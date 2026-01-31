@@ -30,6 +30,9 @@ import { getClientMeta, getSessionId } from "@/lib/session";
 import { serializeChanges } from "@/lib/pending-updates";
 import { PendingFieldUpdate } from "@/components/verification/PendingFieldUpdate";
 import { useToast } from "@/hooks/use-toast";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { iranCities } from "@/data/iran-cities";
+import { formatIranLocation } from "@/lib/location";
 
 export default function ActionDetailPage({
   params,
@@ -77,13 +80,23 @@ export default function ActionDetailPage({
 
   const isFieldPending = (field: string) => Boolean(pendingByField[field]);
   const shownKeys = useMemo(
-    () => new Set(["actionType", "date", "location", "description"]),
+    () =>
+      new Set([
+        "actionType",
+        "date",
+        "locationProvince",
+        "locationCity",
+        "location",
+        "description",
+      ]),
     []
   );
   const fieldLabels = useMemo(
     () => ({
       actionType: actionsT("form.actionType"),
       date: actionsT("form.date"),
+      locationProvince: actionsT("form.province"),
+      locationCity: actionsT("form.city"),
       location: actionsT("form.location"),
       description: actionsT("form.description"),
       perpetratorId: actionsT("form.perpetratorId"),
@@ -105,7 +118,8 @@ export default function ActionDetailPage({
   const [formState, setFormState] = useState({
     actionType: "",
     date: "",
-    location: "",
+    locationProvince: "",
+    locationCity: "",
     description: "",
     reason: "",
   });
@@ -116,10 +130,35 @@ export default function ActionDetailPage({
     if (!action) {
       return;
     }
+    const typedAction = action as {
+      locationProvince?: string;
+      locationCity?: string;
+    };
 
-    const proposedChanges = Object.fromEntries(
-      Object.entries(formState).filter(([key, value]) => key !== "reason" && value.trim().length > 0)
-    ) as Record<string, string>;
+    const proposedChanges: Record<string, string> = {};
+    if (formState.actionType.trim().length > 0) {
+      proposedChanges.actionType = formState.actionType.trim();
+    }
+    if (formState.date.trim().length > 0) {
+      proposedChanges.date = formState.date.trim();
+    }
+    if (formState.description.trim().length > 0) {
+      proposedChanges.description = formState.description.trim();
+    }
+    const nextProvince = formState.locationProvince.trim();
+    const nextCity = formState.locationCity.trim();
+    if (nextProvince.length > 0) {
+      proposedChanges.locationProvince = nextProvince;
+    }
+    if (nextCity.length > 0) {
+      proposedChanges.locationCity = nextCity;
+    }
+    if (nextProvince.length > 0 || nextCity.length > 0) {
+      proposedChanges.location = formatIranLocation(
+        nextProvince.length > 0 ? nextProvince : typedAction.locationProvince,
+        nextCity.length > 0 ? nextCity : typedAction.locationCity,
+      );
+    }
 
     if (Object.keys(proposedChanges).length === 0) {
       return;
@@ -151,7 +190,8 @@ export default function ActionDetailPage({
     setFormState({
       actionType: "",
       date: "",
-      location: "",
+      locationProvince: "",
+      locationCity: "",
       description: "",
       reason: "",
     });
@@ -170,6 +210,8 @@ export default function ActionDetailPage({
     _id: string;
     actionType: string;
     location: string;
+    locationProvince?: string;
+    locationCity?: string;
     date: string;
     description: string;
   };
@@ -321,19 +363,51 @@ export default function ActionDetailPage({
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="update-action-location">{t("propose.location")}</Label>
-                <Input
-                  id="update-action-location"
-                  value={formState.location}
-                  disabled={isFieldPending("location")}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, location: event.target.value }))
+                <Label>{t("propose.province")}</Label>
+                <SearchableSelect
+                  value={formState.locationProvince}
+                  options={Object.keys(iranCities)}
+                  placeholder={actionsT("form.provincePlaceholder")}
+                  searchPlaceholder={actionsT("form.searchProvince")}
+                  emptyLabel={actionsT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={isFieldPending("locationProvince")}
+                  onChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      locationProvince: value,
+                      locationCity: "",
+                    }))
+                  }
+                />
+                {isFieldPending("locationProvince") ? (
+                  <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label>{t("propose.city")}</Label>
+                <SearchableSelect
+                  value={formState.locationCity}
+                  options={iranCities[formState.locationProvince] ?? []}
+                  placeholder={actionsT("form.cityPlaceholder")}
+                  searchPlaceholder={actionsT("form.searchCity")}
+                  emptyLabel={actionsT("form.noResults")}
+                  direction={locale === "fa" ? "rtl" : "ltr"}
+                  disabled={
+                    !formState.locationProvince ||
+                    isFieldPending("locationCity")
+                  }
+                  onChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      locationCity: value,
+                    }))
                   }
                 />
                 <p className="text-xs text-muted-foreground">
                   {currentValueLabel(typed.location)}
                 </p>
-                {isFieldPending("location") ? (
+                {isFieldPending("locationCity") ? (
                   <p className="text-xs text-amber-600">{pendingT("fieldLocked")}</p>
                 ) : null}
               </div>

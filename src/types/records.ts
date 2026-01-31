@@ -26,6 +26,8 @@ export type RegimeMember = BaseRecord & {
   position: string;
   rank: string;
   status: RegimeMemberStatus;
+  lastKnownProvince?: string;
+  lastKnownCity?: string;
   lastKnownLocation: string;
   createdAt: number;
   createdBySession: string;
@@ -39,8 +41,12 @@ export type Victim = BaseRecord & {
   name: string;
   age: number;
   photoUrls: string[];
+  hometownProvince?: string;
+  hometownCity?: string;
   hometown: string;
   status: VictimStatus;
+  incidentProvince?: string;
+  incidentCity?: string;
   incidentDate: string;
   incidentLocation: string;
   circumstances: string;
