@@ -14,7 +14,7 @@
     "documentedVictims": "جاویدنامان مستندشده",
     "recordedActions": "اقدامات ثبت‌شده",
     "identifiedMercenaries": "مزدورهای شناسایی‌شده",
-    "regimeMember": "عضو رژیم",
+    "mercenary": "مزدور",
     "victim": "جاویدنام",
     "action": "اقدام",
     "recentActivity": "فعالیت‌های اخیر",
@@ -24,6 +24,7 @@
   "nav": {
     "brandName": "گارد جاویدان",
     "brandTagline": "سامانه مستندسازی و راستی‌آزمایی",
+    "menu": "منو",
     "language": "زبان",
     "guide": "راهنما",
     "regimeMembers": "مزدورها",

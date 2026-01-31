@@ -60,7 +60,7 @@ export default memo(function FloatingActivity({
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className="text-xs font-medium">
                     {activity.type === "regimeMembers"
-                      ? t("regimeMember")
+                      ? t("mercenary")
                       : activity.type === "victims"
                         ? t("victim")
                         : t("action")}

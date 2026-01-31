@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { Archive, BookOpen, Clock, Crosshair, Crown } from "lucide-react";
 import { locales, type Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { MobileNav } from "@/components/MobileNav";
 import { Button } from "@/components/ui/button";
 import { UpdatesMarquee } from "@/components/updates/UpdatesMarquee";
 
@@ -86,7 +87,10 @@ export default async function LocaleLayout({
                 </Button>
               </nav>
             </div>
-            <LanguageSwitcher locale={locale} />
+            <div className="flex items-center gap-2">
+              <MobileNav />
+              <LanguageSwitcher locale={locale} />
+            </div>
           </div>
         </header>
 

@@ -41,7 +41,7 @@ export const RecentActivity = memo(function RecentActivity({
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "regimeMembers":
-        return t("regimeMember");
+        return t("mercenary");
       case "victims":
         return t("victim");
       case "actions":

@@ -14,7 +14,7 @@
     "documentedVictims": "Documented victims",
     "recordedActions": "Recorded actions",
     "identifiedMercenaries": "Identified mercenaries",
-    "regimeMember": "Regime Member",
+    "mercenary": "Mercenary",
     "victim": "Victim",
     "action": "Action",
     "recentActivity": "Recent Activity",
@@ -24,6 +24,7 @@
   "nav": {
     "brandName": "Gard-e Javidan",
     "brandTagline": "Documentation & Verification System",
+    "menu": "Menu",
     "language": "Language",
     "guide": "Guide",
     "regimeMembers": "Mercenaries",
