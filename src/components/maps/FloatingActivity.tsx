@@ -40,15 +40,15 @@ export default memo(function FloatingActivity({
   }
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 md:top-20 md:right-4 md:left-auto md:bottom-auto md:max-w-sm z-40 flex flex-col gap-2 pointer-events-none max-h-96 overflow-hidden">
-      {/* Gradient fade overlay - bottom to top */}
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/90 via-background/40 to-transparent pointer-events-none z-10" />
+    <div className="md:absolute md:top-20 md:right-4 md:max-w-sm md:z-40 flex flex-col gap-2 md:pointer-events-none md:max-h-96 md:overflow-hidden">
+      {/* Gradient fade overlay - desktop only */}
+      <div className="hidden md:block absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/90 via-background/40 to-transparent pointer-events-none z-10" />
 
       <div className="flex flex-col gap-2">
         {activities.map((activity, index) => (
           <div
             key={activity._id}
-            className="pointer-events-auto rounded-lg shadow-md p-2.5 bg-background/95 backdrop-blur-sm border animate-in slide-in-from-left-5 fade-in duration-300"
+            className="md:pointer-events-auto rounded-lg shadow-md p-2.5 bg-background/95 backdrop-blur-sm border animate-in slide-in-from-left-5 fade-in duration-300"
             style={{
               animationDelay: `${index * 100}ms`,
             }}

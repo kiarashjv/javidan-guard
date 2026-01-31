@@ -107,21 +107,30 @@ export default function HomePage() {
       </section>
 
       {/* Interactive Map Section */}
-      <section className="w-full relative">
-        <IranMap
-          data={mapData}
-          onProvinceClick={handleProvinceClick}
-          translations={{
-            victims: mapTranslations("victims"),
-            actions: mapTranslations("actions"),
-            mercenaries: mapTranslations("mercenaries"),
-            viewDetails: mapTranslations("viewDetails"),
-          }}
-          locale={locale as "en" | "fa"}
-        />
+      <section className="w-full">
+        <div className="relative">
+          <IranMap
+            data={mapData}
+            onProvinceClick={handleProvinceClick}
+            translations={{
+              victims: mapTranslations("victims"),
+              actions: mapTranslations("actions"),
+              mercenaries: mapTranslations("mercenaries"),
+              viewDetails: mapTranslations("viewDetails"),
+            }}
+            locale={locale as "en" | "fa"}
+          />
 
-        {/* Floating Activity Notifications */}
-        <FloatingActivity limit={5} locale={locale as "en" | "fa"} />
+          {/* Floating Activity Notifications - Desktop only */}
+          <div className="hidden md:block">
+            <FloatingActivity limit={5} locale={locale as "en" | "fa"} />
+          </div>
+        </div>
+
+        {/* Activity List - Mobile only, below map */}
+        <div className="md:hidden mt-4">
+          <FloatingActivity limit={5} locale={locale as "en" | "fa"} />
+        </div>
       </section>
     </div>
   );
