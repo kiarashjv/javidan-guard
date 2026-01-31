@@ -17,14 +17,23 @@ export default function RegimeMembersPage() {
   const t = useTranslations("regimeMembers");
   const table = useTranslations("table");
   const pageSize = 20;
+  const [searchQuery, setSearchQuery] = useState("");
   const [cursorStack, setCursorStack] = useState<(string | null)[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
+  const trimmedQuery = searchQuery.trim();
   const result = useQuery(api.regimeMembers.listCurrentPaginated, {
     paginationOpts: { numItems: pageSize, cursor },
+    searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
   });
   const members = result?.page ?? [];
   const direction = locale === "fa" ? "rtl" : "ltr";
   const pageIndex = cursorStack.length + 1;
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCursorStack([]);
+    setCursor(null);
+  };
 
   const handleNext = () => {
     if (!result?.continueCursor) return;
@@ -93,6 +102,9 @@ export default function RegimeMembersPage() {
             },
           ]}
           searchPlaceholder={t("searchPlaceholder")}
+          searchQuery={searchQuery}
+          onSearchQueryChange={handleSearchChange}
+          searchMode="server"
           onRowClick={(member) =>
             router.push(`/${locale}/regime-members/${member._id}`)
           }

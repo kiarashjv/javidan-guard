@@ -27,7 +27,11 @@ export default defineSchema({
   })
     .index("by_current_version", ["currentVersion", "createdAt"])
     .index("by_session", ["createdBySession", "currentVersion"])
-    .index("by_status", ["status", "currentVersion"]),
+    .index("by_status", ["status", "currentVersion"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["currentVersion"],
+    }),
 
   victims: defineTable({
     name: v.string(),
@@ -57,7 +61,11 @@ export default defineSchema({
   })
     .index("by_current_version", ["currentVersion", "createdAt"])
     .index("by_session", ["createdBySession", "currentVersion"])
-    .index("by_status", ["status", "currentVersion"]),
+    .index("by_status", ["status", "currentVersion"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["currentVersion"],
+    }),
 
   actions: defineTable({
     perpetratorId: v.id("regimeMembers"),
@@ -85,7 +93,11 @@ export default defineSchema({
   })
     .index("by_current_version", ["currentVersion", "createdAt"])
     .index("by_session", ["createdBySession", "currentVersion"])
-    .index("by_perpetrator", ["perpetratorId", "currentVersion"]),
+    .index("by_perpetrator", ["perpetratorId", "currentVersion"])
+    .searchIndex("search_description", {
+      searchField: "description",
+      filterFields: ["currentVersion"],
+    }),
 
   pendingUpdates: defineTable({
     targetCollection: v.union(

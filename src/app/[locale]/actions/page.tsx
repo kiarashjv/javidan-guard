@@ -17,15 +17,24 @@ export default function ActionsPage() {
   const t = useTranslations("actions");
   const table = useTranslations("table");
   const pageSize = 20;
+  const [searchQuery, setSearchQuery] = useState("");
   const [cursorStack, setCursorStack] = useState<(string | null)[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
+  const trimmedQuery = searchQuery.trim();
   const result = useQuery(api.actions.listCurrentPaginated, {
     paginationOpts: { numItems: pageSize, cursor },
+    searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
   });
   const actions = result?.page ?? [];
   const direction = locale === "fa" ? "rtl" : "ltr";
   const actionRows = (actions ?? []) as ActionRow[];
   const pageIndex = cursorStack.length + 1;
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCursorStack([]);
+    setCursor(null);
+  };
 
   const handleNext = () => {
     if (!result?.continueCursor) return;
@@ -92,6 +101,9 @@ export default function ActionsPage() {
             },
           ]}
           searchPlaceholder={t("searchPlaceholder")}
+          searchQuery={searchQuery}
+          onSearchQueryChange={handleSearchChange}
+          searchMode="server"
           onRowClick={(action) => router.push(`/${locale}/actions/${action._id}`)}
           direction={direction}
           showStatusFilter

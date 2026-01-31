@@ -35,12 +35,28 @@ export const listCurrentPaginated = queryGeneric({
         cursor: v.optional(v.union(v.string(), v.null())),
       }),
     ),
+    searchQuery: v.optional(v.string()),
   },
   handler: async (
     ctx: QueryCtx,
-    args: { paginationOpts?: { numItems: number; cursor?: string | null } },
+    args: {
+      paginationOpts?: { numItems: number; cursor?: string | null };
+      searchQuery?: string;
+    },
   ) => {
     const paginationOpts = args.paginationOpts ?? { numItems: 20, cursor: null };
+    const searchQuery = args.searchQuery?.trim();
+    if (searchQuery) {
+      return ctx.db
+        .query("victims")
+        .withSearchIndex("search_name", (q) =>
+          q.search("name", searchQuery).eq("currentVersion", true),
+        )
+        .paginate({
+          numItems: paginationOpts.numItems,
+          cursor: paginationOpts.cursor ?? null,
+        });
+    }
     return ctx.db
       .query("victims")
       .withIndex("by_current_version", (q) => q.eq("currentVersion", true))

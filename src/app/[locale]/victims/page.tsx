@@ -17,14 +17,23 @@ export default function VictimsPage() {
   const t = useTranslations("victims");
   const table = useTranslations("table");
   const pageSize = 20;
+  const [searchQuery, setSearchQuery] = useState("");
   const [cursorStack, setCursorStack] = useState<(string | null)[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
+  const trimmedQuery = searchQuery.trim();
   const result = useQuery(api.victims.listCurrentPaginated, {
     paginationOpts: { numItems: pageSize, cursor },
+    searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
   });
   const victims = result?.page ?? [];
   const direction = locale === "fa" ? "rtl" : "ltr";
   const pageIndex = cursorStack.length + 1;
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCursorStack([]);
+    setCursor(null);
+  };
 
   const handleNext = () => {
     if (!result?.continueCursor) return;
@@ -99,6 +108,9 @@ export default function VictimsPage() {
             },
           ]}
           searchPlaceholder={t("searchPlaceholder")}
+          searchQuery={searchQuery}
+          onSearchQueryChange={handleSearchChange}
+          searchMode="server"
           onRowClick={(victim) => router.push(`/${locale}/victims/${victim._id}`)}
           direction={direction}
           showStatusFilter

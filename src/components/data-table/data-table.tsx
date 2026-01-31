@@ -30,6 +30,9 @@ interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   searchPlaceholder?: string;
+  searchQuery?: string;
+  onSearchQueryChange?: (value: string) => void;
+  searchMode?: "client" | "server";
   onRowClick?: (item: T) => void;
   pageSize?: number;
   pagination?: {
@@ -75,6 +78,9 @@ export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
   searchPlaceholder = "Search...",
+  searchQuery,
+  onSearchQueryChange,
+  searchMode = "client",
   onRowClick,
   pageSize = 20,
   pagination,
@@ -100,7 +106,9 @@ export function DataTable<T extends Record<string, unknown>>({
     status: "Status",
   },
 }: DataTableProps<T>) {
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [localSearchQuery, setLocalSearchQuery] = React.useState("");
+  const effectiveSearchQuery = searchQuery ?? localSearchQuery;
+  const isServerSearch = searchMode === "server";
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [sortKey, setSortKey] = React.useState<(keyof T & string) | null>(null);
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
@@ -116,12 +124,15 @@ export function DataTable<T extends Record<string, unknown>>({
     let filtered = data;
 
     // Apply search filter
-    if (searchQuery) {
+    if (!isServerSearch && effectiveSearchQuery) {
       filtered = filtered.filter((item) =>
         Object.values(item).some(
           (value) =>
             value &&
-            value.toString().toLowerCase().includes(searchQuery.toLowerCase()),
+            value
+              .toString()
+              .toLowerCase()
+              .includes(effectiveSearchQuery.toLowerCase()),
         ),
       );
     }
@@ -163,7 +174,8 @@ export function DataTable<T extends Record<string, unknown>>({
     return filtered;
   }, [
     data,
-    searchQuery,
+    effectiveSearchQuery,
+    isServerSearch,
     statusFilter,
     sortKey,
     sortDirection,
@@ -199,8 +211,15 @@ export function DataTable<T extends Record<string, unknown>>({
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={effectiveSearchQuery}
+            onChange={(e) => {
+              const nextValue = e.target.value;
+              if (onSearchQueryChange) {
+                onSearchQueryChange(nextValue);
+              } else {
+                setLocalSearchQuery(nextValue);
+              }
+            }}
             className="pl-9"
           />
         </div>

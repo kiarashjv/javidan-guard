@@ -18,7 +18,10 @@ export const api = {
     ),
     listCurrentPaginated: makeFunctionReference<
       "query",
-      { paginationOpts?: { numItems: number; cursor?: string | null } },
+      {
+        paginationOpts?: { numItems: number; cursor?: string | null };
+        searchQuery?: string;
+      },
       PaginatedResult<RegimeMember>
     >(
       "regimeMembers:listCurrentPaginated"
@@ -58,7 +61,10 @@ export const api = {
     ),
     listCurrentPaginated: makeFunctionReference<
       "query",
-      { paginationOpts?: { numItems: number; cursor?: string | null } },
+      {
+        paginationOpts?: { numItems: number; cursor?: string | null };
+        searchQuery?: string;
+      },
       PaginatedResult<Victim>
     >(
       "victims:listCurrentPaginated"
@@ -99,7 +105,10 @@ export const api = {
     ),
     listCurrentPaginated: makeFunctionReference<
       "query",
-      { paginationOpts?: { numItems: number; cursor?: string | null } },
+      {
+        paginationOpts?: { numItems: number; cursor?: string | null };
+        searchQuery?: string;
+      },
       PaginatedResult<unknown>
     >(
       "actions:listCurrentPaginated"
