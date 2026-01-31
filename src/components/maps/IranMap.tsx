@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { MapContainer, GeoJSON, useMap } from "react-leaflet";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 interface ProvinceData {
@@ -13,6 +12,7 @@ interface ProvinceData {
 
 interface IranMapProps {
   data?: Record<string, ProvinceData>;
+  onNewActivity?: (provinceCode: string) => void;
 }
 
 // Color scale function
@@ -24,33 +24,69 @@ const getColor = (victims: number) => {
   return "#fca5a5";
 };
 
-function MapComponent({ provinceData }: { provinceData: Record<string, ProvinceData> }) {
-  const [geoData, setGeoData] = useState<any>(null);
+function MapComponent({
+  provinceData,
+  previousData,
+}: {
+  provinceData: Record<string, ProvinceData>;
+  previousData: Record<string, ProvinceData>;
+}) {
+  const [geoData, setGeoData] = useState<Record<string, unknown> | null>(null);
+  const [animatingProvinces, setAnimatingProvinces] = useState<Set<string>>(
+    new Set(),
+  );
   const map = useMap();
 
   useEffect(() => {
     // Load GeoJSON data
     fetch("/data/iran-provinces.json")
       .then((res) => res.json())
-      .then((data) => {
-        console.log("Loaded provinces:", data.features?.length);
+      .then((data: Record<string, unknown>) => {
         setGeoData(data);
-
-        // Fit map to Iran bounds
-        if (data.features) {
-          const geoJsonLayer = L.geoJSON(data);
-          map.fitBounds(geoJsonLayer.getBounds());
-        }
       })
       .catch((err) => console.error("Error loading GeoJSON:", err));
   }, [map]);
 
-  if (!geoData) return null;
+  // Detect new data and trigger animations
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    const newAnimations = new Set<string>();
 
-  const onEachFeature = (feature: any, layer: any) => {
+    Object.keys(provinceData).forEach((provinceCode) => {
+      const current = provinceData[provinceCode];
+      const previous = previousData[provinceCode];
+
+      if (
+        previous &&
+        (current.victims > previous.victims ||
+          current.actions > previous.actions ||
+          current.mercenaries > previous.mercenaries)
+      ) {
+        newAnimations.add(provinceCode);
+      }
+    });
+
+    if (newAnimations.size > 0) {
+      // Schedule state update to avoid synchronous setState in effect
+      timeoutId = setTimeout(() => {
+        setAnimatingProvinces(newAnimations);
+        // Clear animations after 3 seconds
+        setTimeout(() => setAnimatingProvinces(new Set()), 3000);
+      }, 0);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [provinceData, previousData]);
+
+  const onEachFeature = (feature: { properties?: { tags?: Record<string, string> } }, layer: L.Layer) => {
     const provinceCode = feature.properties?.tags?.["ISO3166-2"];
-    const provinceName = feature.properties?.tags?.["name:en"] || feature.properties?.tags?.name || "Unknown";
-    const data = provinceData[provinceCode];
+    const provinceName =
+      feature.properties?.tags?.["name:en"] ||
+      feature.properties?.tags?.name ||
+      "Unknown";
+    const data = provinceData[provinceCode || ""];
 
     if (data) {
       // Create popup content
@@ -74,73 +110,129 @@ function MapComponent({ provinceData }: { provinceData: Record<string, ProvinceD
         </div>
       `;
 
-      layer.bindPopup(popupContent);
+      (layer as L.Path).bindPopup(popupContent);
 
-      // Add hover effect
+      // Add hover effect with proper z-index
       layer.on({
-        mouseover: () => {
-          layer.setStyle({
-            weight: 3,
+        mouseover: (e: L.LeafletMouseEvent) => {
+          const targetLayer = e.target as L.Path;
+          targetLayer.setStyle({
+            weight: 4,
             color: "#fbbf24",
-            fillOpacity: 0.9,
+            fillOpacity: 0.95,
           });
+          targetLayer.bringToFront();
         },
-        mouseout: () => {
-          layer.setStyle({
-            weight: 2,
-            color: "#ffffff",
-            fillOpacity: 0.7,
+        mouseout: (e: L.LeafletMouseEvent) => {
+          const targetLayer = e.target as L.Path;
+          const provinceCode = feature.properties?.tags?.["ISO3166-2"];
+          const isAnimating = animatingProvinces.has(provinceCode || "");
+          targetLayer.setStyle({
+            weight: isAnimating ? 4 : 1.5,
+            color: isAnimating ? "#fbbf24" : "#ffffff",
+            fillOpacity: isAnimating ? 0.9 : 0.8,
           });
         },
       });
     }
   };
 
-  const style = (feature: any) => {
-    const provinceCode = feature?.properties?.tags?.["ISO3166-2"];
+  const style = (feature?: { properties?: { tags?: Record<string, string> } }) => {
+    const provinceCode = feature?.properties?.tags?.["ISO3166-2"] || "";
     const data = provinceData[provinceCode];
     const fillColor = data ? getColor(data.victims) : "#e5e7eb";
+    const isAnimating = animatingProvinces.has(provinceCode);
 
     return {
       fillColor,
-      weight: 2,
+      weight: isAnimating ? 4 : 1.5,
       opacity: 1,
-      color: "#ffffff",
-      fillOpacity: 0.7,
+      color: isAnimating ? "#fbbf24" : "#ffffff",
+      fillOpacity: isAnimating ? 0.9 : 0.8,
+      className: isAnimating ? "animate-pulse" : "",
     };
   };
 
-  return <GeoJSON data={geoData} style={style} onEachFeature={onEachFeature} />;
+  if (!geoData) return null;
+
+  return <GeoJSON data={geoData as never} style={style} onEachFeature={onEachFeature} />;
 }
 
 export default function IranMap({ data = {} }: IranMapProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [zoom, setZoom] = useState(6);
+  const [center, setCenter] = useState<[number, number]>([32, 54]);
+  const [mapScale, setMapScale] = useState(1);
+  const [previousData, setPreviousData] = useState<Record<string, ProvinceData>>({});
 
   useEffect(() => {
     setIsMounted(true);
+
+    // Set initial zoom and center based on screen size
+    const updateMapView = () => {
+      if (window.innerWidth < 768) {
+        setZoom(4); // Mobile - lower zoom to show full map
+        setCenter([33, 53.5]); // Adjusted center for better framing
+        setMapScale(1.5); // Scale UP to make map bigger on small screens
+      } else if (window.innerWidth < 1024) {
+        setZoom(5); // Tablet - whole number zoom
+        setCenter([32.5, 54]);
+        setMapScale(1);
+      } else {
+        setZoom(6); // Desktop
+        setCenter([32.5, 54]);
+        setMapScale(1);
+      }
+    };
+
+    updateMapView();
+    window.addEventListener("resize", updateMapView);
+
+    return () => window.removeEventListener("resize", updateMapView);
   }, []);
+
+  useEffect(() => {
+    // Update previous data state after render
+    setPreviousData(data);
+  }, [data]);
 
   if (!isMounted) {
     return (
-      <div className="w-full h-200 bg-muted/20 rounded-lg flex items-center justify-center">
+      <div className="w-full h-100 md:h-125 lg:h-150 bg-muted/20 rounded-lg flex items-center justify-center">
         Loading map...
       </div>
     );
   }
 
   return (
-    <div className="w-full h-200 rounded-lg overflow-hidden">
-      <MapContainer
-        center={[32, 54]}
-        style={{ height: "100%", width: "100%", backgroundColor: "white" }}
-        scrollWheelZoom={false}
-        zoomControl={false}
-        doubleClickZoom={false}
-        dragging={false}
-        attributionControl={false}
+    <div className="w-full h-100 md:h-200 lg:h-200 rounded-lg relative overflow-hidden flex items-center justify-center">
+      <div
+        style={{
+          transform: `scale(${mapScale})`,
+          transformOrigin: "center center",
+          height: "100%",
+          width: "100%",
+        }}
       >
-        <MapComponent provinceData={data} />
-      </MapContainer>
+        <MapContainer
+          center={center}
+          zoom={zoom}
+          key={`${zoom}-${center[0]}-${center[1]}`}
+          style={{
+            height: "100%",
+            width: "100%",
+            backgroundColor: "transparent",
+            borderRadius: "0.5rem",
+          }}
+          scrollWheelZoom={false}
+          zoomControl={false}
+          doubleClickZoom={false}
+          dragging={false}
+          attributionControl={false}
+        >
+          <MapComponent provinceData={data} previousData={previousData} />
+        </MapContainer>
+      </div>
     </div>
   );
 }

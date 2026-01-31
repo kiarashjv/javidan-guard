@@ -7,6 +7,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { RecentActivity } from "@/components/maps/RecentActivity";
 
 const IranMap = dynamic(() => import("@/components/maps/IranMap"), {
   ssr: false,
@@ -24,15 +25,9 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-16">
-      {/* Hero Section with Map Background */}
-      <section className="relative flex flex-col items-center text-center gap-6 py-20 -mx-4 md:-mx-6">
-        {/* Map Background with Low Opacity */}
-        <div className="absolute inset-0 -top-40 opacity-20 pointer-events-none">
-          <IranMap data={mapData} />
-        </div>
-
-        {/* Hero Content */}
-        <div className="relative z-10 flex flex-col items-center gap-6">
+      {/* Hero Section */}
+      <section className="flex flex-col items-center text-center gap-6 py-20">
+        <div className="flex flex-col items-center gap-6">
           <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
             Documentation & Verification
           </div>
@@ -49,6 +44,12 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* Interactive Map Section */}
+      <section className="w-full">
+        <IranMap data={mapData} />
+        <RecentActivity />
       </section>
 
       {/* Features Grid */}
