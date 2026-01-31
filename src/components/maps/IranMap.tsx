@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MapContainer, GeoJSON, useMap } from "react-leaflet";
+import { useEffect, useState, useRef } from "react";
+import { MapContainer, GeoJSON, useMap, Circle } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 interface ProvinceData {
@@ -24,18 +24,58 @@ const getColor = (victims: number) => {
   return "#fca5a5";
 };
 
+// Helper function to calculate province centroid
+function getProvinceCentroid(feature: {
+  geometry: { type: string; coordinates: unknown };
+}): [number, number] | null {
+  try {
+    let coords: number[][] = [];
+
+    if (feature.geometry.type === "Polygon") {
+      coords = (feature.geometry.coordinates as number[][][])[0];
+    } else if (feature.geometry.type === "MultiPolygon") {
+      // For MultiPolygon, take the first polygon's outer ring
+      coords = ((feature.geometry.coordinates as number[][][][])[0][0]);
+    }
+
+    if (coords.length === 0) return null;
+
+    const lats = coords.map((c: number[]) => c[1]);
+    const lngs = coords.map((c: number[]) => c[0]);
+
+    return [
+      (Math.min(...lats) + Math.max(...lats)) / 2,
+      (Math.min(...lngs) + Math.max(...lngs)) / 2,
+    ];
+  } catch (error) {
+    console.error("Error calculating centroid:", error);
+    return null;
+  }
+}
+
 function MapComponent({
   provinceData,
-  previousData,
 }: {
   provinceData: Record<string, ProvinceData>;
-  previousData: Record<string, ProvinceData>;
 }) {
   const [geoData, setGeoData] = useState<Record<string, unknown> | null>(null);
   const [animatingProvinces, setAnimatingProvinces] = useState<Set<string>>(
     new Set(),
   );
+  const [provinceCentroids, setProvinceCentroids] = useState<
+    Map<string, [number, number]>
+  >(new Map());
+  const [previousData, setPreviousData] = useState<Record<string, ProvinceData>>({});
+  const animatingRef = useRef<Set<string>>(new Set());
   const map = useMap();
+
+  // Update previous data after animations are triggered
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPreviousData(provinceData);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [provinceData]);
 
   useEffect(() => {
     // Load GeoJSON data
@@ -43,6 +83,26 @@ function MapComponent({
       .then((res) => res.json())
       .then((data: Record<string, unknown>) => {
         setGeoData(data);
+
+        // Calculate province centroids
+        const features = (data as { features?: unknown[] })?.features || [];
+        const centroids = new Map<string, [number, number]>();
+
+        features.forEach((feature: unknown) => {
+          const f = feature as {
+            properties?: { tags?: Record<string, string> };
+            geometry: { type: string; coordinates: unknown };
+          };
+          const provinceCode = f.properties?.tags?.["ISO3166-2"];
+          if (provinceCode) {
+            const centroid = getProvinceCentroid(f);
+            if (centroid) {
+              centroids.set(provinceCode, centroid);
+            }
+          }
+        });
+
+        setProvinceCentroids(centroids);
       })
       .catch((err) => console.error("Error loading GeoJSON:", err));
   }, [map]);
@@ -56,8 +116,10 @@ function MapComponent({
       const current = provinceData[provinceCode];
       const previous = previousData[provinceCode];
 
+      // Only animate if not already animating and data increased
       if (
         previous &&
+        !animatingRef.current.has(provinceCode) &&
         (current.victims > previous.victims ||
           current.actions > previous.actions ||
           current.mercenaries > previous.mercenaries)
@@ -67,11 +129,24 @@ function MapComponent({
     });
 
     if (newAnimations.size > 0) {
+      // Add to ref immediately to prevent duplicate animations
+      newAnimations.forEach((code) => animatingRef.current.add(code));
+
       // Schedule state update to avoid synchronous setState in effect
       timeoutId = setTimeout(() => {
-        setAnimatingProvinces(newAnimations);
-        // Clear animations after 3 seconds
-        setTimeout(() => setAnimatingProvinces(new Set()), 3000);
+        setAnimatingProvinces((prev) => new Set([...prev, ...newAnimations]));
+        // Clear animations after all ripples complete with extra buffer
+        // Last ripple: 1800ms delay + 2000ms duration = 3800ms + 700ms buffer = 4500ms
+        setTimeout(() => {
+          setAnimatingProvinces((prev) => {
+            const updated = new Set(prev);
+            newAnimations.forEach((code) => {
+              updated.delete(code);
+              animatingRef.current.delete(code);
+            });
+            return updated;
+          });
+        }, 4500);
       }, 0);
     }
 
@@ -141,32 +216,109 @@ function MapComponent({
     const provinceCode = feature?.properties?.tags?.["ISO3166-2"] || "";
     const data = provinceData[provinceCode];
     const fillColor = data ? getColor(data.victims) : "#e5e7eb";
-    const isAnimating = animatingProvinces.has(provinceCode);
 
     return {
       fillColor,
-      weight: isAnimating ? 4 : 1.5,
+      weight: 1.5,
       opacity: 1,
-      color: isAnimating ? "#fbbf24" : "#ffffff",
-      fillOpacity: isAnimating ? 0.9 : 0.8,
-      className: isAnimating ? "animate-pulse" : "",
+      color: "#ffffff",
+      fillOpacity: 0.8,
     };
   };
 
   if (!geoData) return null;
 
-  return <GeoJSON data={geoData as never} style={style} onEachFeature={onEachFeature} />;
+  // Render radar animation circles for animating provinces
+  const radarCircles = Array.from(animatingProvinces).flatMap((provinceCode) => {
+    const centroid = provinceCentroids.get(provinceCode);
+    if (!centroid) return [];
+
+    // Create 4 ripple circles with staggered delays for water droplet effect
+    // All start at same size and scale up while fading out
+    return [0, 600, 1200, 1800].map((_, index) => (
+      <Circle
+        key={`${provinceCode}-radar-${index}`}
+        center={centroid}
+        radius={15000} // Base radius in meters (~50px at typical zoom)
+        pathOptions={{
+          fillColor: "#ffffff",
+          fillOpacity: 0,
+          color: "#dc2626",
+          weight: 3,
+          opacity: 0,
+        }}
+        className={`radar-ripple radar-ripple-${index}`}
+        eventHandlers={{}}
+      />
+    ));
+  });
+
+  // Inline styles for radar ripple animation
+  const radarStyles = (
+    <style>
+      {`
+        .radar-ripple-0,
+        .radar-ripple-1,
+        .radar-ripple-2,
+        .radar-ripple-3 {
+          transform-box: fill-box;
+          transform-origin: center center;
+        }
+
+        @keyframes radar-ripple {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+            stroke-opacity: 0;
+            fill-opacity: 0;
+          }
+          15% {
+            opacity: 1;
+            stroke-opacity: 1;
+            fill-opacity: 0.6;
+          }
+          100% {
+            transform: scale(3);
+            opacity: 0;
+            stroke-opacity: 0;
+            fill-opacity: 0;
+          }
+        }
+
+        .radar-ripple-0 {
+          animation: radar-ripple 2s ease-out 0ms 1 forwards;
+        }
+        .radar-ripple-1 {
+          animation: radar-ripple 2s ease-out 600ms 1 forwards;
+        }
+        .radar-ripple-2 {
+          animation: radar-ripple 2s ease-out 1200ms 1 forwards;
+        }
+        .radar-ripple-3 {
+          animation: radar-ripple 2s ease-out 1800ms 1 forwards;
+        }
+      `}
+    </style>
+  );
+
+  return (
+    <>
+      {radarStyles}
+      <GeoJSON data={geoData as never} style={style} onEachFeature={onEachFeature} />
+      {radarCircles}
+    </>
+  );
 }
 
 export default function IranMap({ data = {} }: IranMapProps) {
-  const [isMounted, setIsMounted] = useState(false);
   const [zoom, setZoom] = useState(6);
   const [center, setCenter] = useState<[number, number]>([32, 54]);
   const [mapScale, setMapScale] = useState(1);
-  const [previousData, setPreviousData] = useState<Record<string, ProvinceData>>({});
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    // Wait for client-side mounting before rendering map
+    requestAnimationFrame(() => setIsReady(true));
 
     // Set initial zoom and center based on screen size
     const updateMapView = () => {
@@ -191,12 +343,7 @@ export default function IranMap({ data = {} }: IranMapProps) {
     return () => window.removeEventListener("resize", updateMapView);
   }, []);
 
-  useEffect(() => {
-    // Update previous data state after render
-    setPreviousData(data);
-  }, [data]);
-
-  if (!isMounted) {
+  if (!isReady) {
     return (
       <div className="w-full h-100 md:h-125 lg:h-150 bg-muted/20 rounded-lg flex items-center justify-center">
         Loading map...
@@ -230,7 +377,7 @@ export default function IranMap({ data = {} }: IranMapProps) {
           dragging={false}
           attributionControl={false}
         >
-          <MapComponent provinceData={data} previousData={previousData} />
+          <MapComponent provinceData={data} />
         </MapContainer>
       </div>
     </div>
