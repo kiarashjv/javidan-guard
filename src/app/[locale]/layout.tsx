@@ -3,7 +3,7 @@ import Link from "next/link";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { Archive, Clock, Crosshair, Crown } from "lucide-react";
+import { Archive, BookOpen, Clock, Crosshair, Crown } from "lucide-react";
 import { locales, type Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,12 @@ export default async function LocaleLayout({
                     {t("pending")}
                   </Link>
                 </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href={`/${locale}/guide`} className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    {t("guide")}
+                  </Link>
+                </Button>
               </nav>
             </div>
             <LanguageSwitcher locale={locale} />
@@ -126,6 +132,9 @@ export default async function LocaleLayout({
                   </Link>
                   <Link href={`/${locale}/pending`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {t("pending")}
+                  </Link>
+                  <Link href={`/${locale}/guide`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    {t("guide")}
                   </Link>
                 </nav>
               </div>

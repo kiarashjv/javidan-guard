@@ -15,6 +15,7 @@
     "brandName": "Gard-e Javidan",
     "brandTagline": "Documentation & Verification System",
     "language": "Language",
+    "guide": "Guide",
     "regimeMembers": "Mercenaries",
     "victims": "Victims",
     "actions": "Actions",
@@ -437,6 +438,46 @@
       "changes": {
         "title": "Changes to these terms",
         "body": "We may update these terms to protect the community. Continued use means acceptance of updates."
+      }
+    }
+  },
+  "guide": {
+    "title": "Platform guide",
+    "subtitle": "What this platform is for and how to contribute safely.",
+    "sections": {
+      "mission": {
+        "title": "Mission",
+        "body": "Gard-e Javidan is a public accountability archive focused on verified records and historical preservation."
+      },
+      "how": {
+        "title": "How it works",
+        "body": "Anyone can submit new records. Updates require community verification.",
+        "items": [
+          "Create a record with evidence and clear context",
+          "Propose updates if details change or improve",
+          "Verify updates to help the most accurate version become official"
+        ]
+      },
+      "verification": {
+        "title": "Verification",
+        "body": "Updates are reviewed and confirmed by multiple independent sessions before becoming current."
+      },
+      "anonymity": {
+        "title": "Anonymity",
+        "body": "No accounts or emails. We rely on anonymous sessions and minimal metadata to reduce risk."
+      },
+      "what": {
+        "title": "What to submit",
+        "body": "Focus on verifiable facts and supporting evidence.",
+        "items": [
+          "Names, roles, and affiliations",
+          "Dates and locations tied to incidents",
+          "Sources, media, or witness accounts when available"
+        ]
+      },
+      "safety": {
+        "title": "Safety",
+        "body": "Avoid sharing personal identifying information about contributors. Use this platform responsibly."
       }
     }
   },
