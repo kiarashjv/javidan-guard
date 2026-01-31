@@ -20,12 +20,7 @@ export function UpdatesMarquee() {
             {t("marqueeTitle")}
           </span>
           <div className="relative flex-1 overflow-hidden">
-            <Marquee
-              pauseOnHover
-              duration="30s"
-              gap="2rem"
-              className="py-1"
-            >
+            <Marquee pauseOnHover duration="24s" gap="2rem" className="py-1">
               {content.map((text, index) => (
                 <span
                   key={`${text}-${index}`}
