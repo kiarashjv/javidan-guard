@@ -32,6 +32,7 @@
     "ctaReport": "Report a member",
     "loading": "Loading records...",
     "empty": "No records yet.",
+    "emptySearch": "No matching results. You can add a new record.",
     "lastKnownLocation": "Last known location",
     "viewProfile": "View profile",
     "historyLink": "View history",
@@ -148,6 +149,7 @@
     "subtitle": "Document incidents linked to mercenaries and victims.",
     "loading": "Loading actions...",
     "empty": "No actions yet.",
+    "emptySearch": "No matching results. You can add a new record.",
     "view": "View action",
     "searchPlaceholder": "Search actions by type, location, or date",
     "types": {
@@ -267,6 +269,7 @@
     "searchPlaceholder": "Search by name, hometown, or location",
     "loading": "Loading records...",
     "empty": "No records yet.",
+    "emptySearch": "No matching results. You can add a new record.",
     "placeholderTitle": "Victim records coming soon",
     "placeholderSubtitle": "We will list verified records here.",
     "placeholderBody": "This section will support evidence, timelines, and witness accounts.",

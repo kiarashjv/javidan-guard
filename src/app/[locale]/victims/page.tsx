@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery } from "convex/react";
 import { PlusIcon } from "lucide-react";
@@ -10,29 +10,66 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table/data-table";
 import { api } from "@/lib/convex-api";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 
 export default function VictimsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations("victims");
   const table = useTranslations("table");
   const pageSize = 20;
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(
+    () => searchParams.get("q") ?? "",
+  );
+  const debouncedQuery = useDebouncedValue(searchQuery, 400);
   const [cursorStack, setCursorStack] = useState<(string | null)[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
-  const trimmedQuery = searchQuery.trim();
+  const trimmedQuery = debouncedQuery.trim();
+  const initialStatus = searchParams.get("status") ?? "all";
+  const initialFilterValues = {
+    hometown: searchParams.get("hometown") ?? "all",
+    incidentLocation: searchParams.get("incidentLocation") ?? "all",
+  };
   const result = useQuery(api.victims.listCurrentPaginated, {
     paginationOpts: { numItems: pageSize, cursor },
     searchQuery: trimmedQuery.length > 0 ? trimmedQuery : undefined,
   });
+  const isLoading = result === undefined;
   const victims = result?.page ?? [];
   const direction = locale === "fa" ? "rtl" : "ltr";
   const pageIndex = cursorStack.length + 1;
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+  const updateSearchParams = useCallback((updates: Record<string, string | null>) => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === "all") {
+        nextParams.delete(key);
+      } else {
+        nextParams.set(key, value);
+      }
+    });
+    const nextString = nextParams.toString();
+    const currentString = searchParams.toString();
+    if (nextString !== currentString) {
+      const nextUrl = nextString ? `${pathname}?${nextString}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    updateSearchParams({ q: trimmedQuery.length > 0 ? trimmedQuery : null });
+  }, [trimmedQuery, updateSearchParams]);
+
+  const resetPagination = () => {
     setCursorStack([]);
     setCursor(null);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    resetPagination();
   };
 
   const handleNext = () => {
@@ -51,6 +88,21 @@ export default function VictimsPage() {
     });
   };
 
+  const handleStatusFilterChange = (value: string) => {
+    resetPagination();
+    updateSearchParams({ status: value });
+  };
+
+  const handleFilterValuesChange = (values: Record<string, string>) => {
+    resetPagination();
+    updateSearchParams(values);
+  };
+
+  const hasActiveFilters =
+    trimmedQuery.length > 0 ||
+    initialStatus !== "all" ||
+    Object.values(initialFilterValues).some((value) => value !== "all");
+
   return (
     <section className="space-y-8">
       <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
@@ -67,81 +119,87 @@ export default function VictimsPage() {
         </Button>
       </div>
 
-      {result === undefined ? (
-        <div className="text-sm text-muted-foreground">{t("loading")}</div>
-      ) : (
+      <div className="space-y-6">
         <DataTable
           data={victims}
           columns={[
-            {
-              key: "name",
-              label: t("form.name"),
-              sortable: true,
-            },
-            {
-              key: "age",
-              label: t("form.age"),
-              sortable: true,
-              render: (victim) => victim.age || "-",
-            },
-            {
-              key: "hometown",
-              label: t("form.hometown"),
-              sortable: true,
-            },
-            {
-              key: "status",
-              label: t("form.status"),
-              sortable: true,
-              render: (victim) => (
-                <Badge variant="secondary">{t(`status.${victim.status}`)}</Badge>
-              ),
-            },
-            {
-              key: "incidentDate",
-              label: t("form.incidentDate"),
-              sortable: true,
-            },
-            {
-              key: "incidentLocation",
-              label: t("form.incidentLocation"),
-            },
-          ]}
-          searchPlaceholder={t("searchPlaceholder")}
-          searchQuery={searchQuery}
-          onSearchQueryChange={handleSearchChange}
-          searchMode="server"
-          onRowClick={(victim) => router.push(`/${locale}/victims/${victim._id}`)}
-          direction={direction}
-          showStatusFilter
-          statusOptions={[
-            { value: "murdered", label: t("status.murdered") },
-            { value: "captured", label: t("status.captured") },
-            { value: "vanished", label: t("status.vanished") },
-            { value: "released", label: t("status.released") },
-            { value: "confirmed_dead", label: t("status.confirmed_dead") },
-          ]}
-          filters={[
-            { key: "hometown", label: t("form.hometown") },
-            { key: "incidentLocation", label: t("form.incidentLocation") },
-          ]}
-          labels={{
-            all: table("all"),
-            results: (from, to, filtered, total) =>
-              filtered === total
-                ? table("results", { from, to, total })
-                : table("resultsFiltered", { from, to, filtered, total }),
-            resultsPage: (from, to) => table("resultsPage", { from, to }),
-            resultsFilteredPage: (from, to, filtered) =>
-              table("resultsFilteredPage", { from, to, filtered }),
-            page: (current, total) => table("page", { current, total }),
-            pageCurrent: (current) => table("pageCurrent", { current }),
-            rowsPerPage: table("rowsPerPage"),
-            noResults: table("noResults"),
-            previous: table("previous"),
-            next: table("next"),
-            status: table("status"),
-          }}
+              {
+                key: "name",
+                label: t("form.name"),
+                sortable: true,
+              },
+              {
+                key: "age",
+                label: t("form.age"),
+                sortable: true,
+                render: (victim) => victim.age || "-",
+              },
+              {
+                key: "hometown",
+                label: t("form.hometown"),
+                sortable: true,
+              },
+              {
+                key: "status",
+                label: t("form.status"),
+                sortable: true,
+                render: (victim) => (
+                  <Badge variant="secondary">
+                    {t(`status.${victim.status}`)}
+                  </Badge>
+                ),
+              },
+              {
+                key: "incidentDate",
+                label: t("form.incidentDate"),
+                sortable: true,
+              },
+              {
+                key: "incidentLocation",
+                label: t("form.incidentLocation"),
+              },
+            ]}
+            searchPlaceholder={t("searchPlaceholder")}
+            searchQuery={searchQuery}
+            onSearchQueryChange={handleSearchChange}
+            searchMode="server"
+            onRowClick={(victim) =>
+              router.push(`/${locale}/victims/${victim._id}`)
+            }
+            direction={direction}
+            showStatusFilter
+            statusOptions={[
+              { value: "murdered", label: t("status.murdered") },
+              { value: "captured", label: t("status.captured") },
+              { value: "vanished", label: t("status.vanished") },
+              { value: "released", label: t("status.released") },
+              { value: "confirmed_dead", label: t("status.confirmed_dead") },
+            ]}
+            initialStatusFilter={initialStatus}
+            onStatusFilterChange={handleStatusFilterChange}
+            filters={[
+              { key: "hometown", label: t("form.hometown") },
+              { key: "incidentLocation", label: t("form.incidentLocation") },
+            ]}
+            initialFilterValues={initialFilterValues}
+            onFilterValuesChange={handleFilterValuesChange}
+            labels={{
+              all: table("all"),
+              results: (from, to, filtered, total) =>
+                filtered === total
+                  ? table("results", { from, to, total })
+                  : table("resultsFiltered", { from, to, filtered, total }),
+              resultsPage: (from, to) => table("resultsPage", { from, to }),
+              resultsFilteredPage: (from, to, filtered) =>
+                table("resultsFilteredPage", { from, to, filtered }),
+              page: (current, total) => table("page", { current, total }),
+              pageCurrent: (current) => table("pageCurrent", { current }),
+              rowsPerPage: table("rowsPerPage"),
+              noResults: table("noResults"),
+              previous: table("previous"),
+              next: table("next"),
+              status: table("status"),
+            }}
           pagination={{
             pageIndex,
             hasNext: Boolean(result?.continueCursor),
@@ -149,8 +207,25 @@ export default function VictimsPage() {
             onNext: handleNext,
             onPrevious: handlePrevious,
           }}
+          isLoading={isLoading}
+          renderEmpty={
+            !isLoading && victims.length === 0
+              ? () => (
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      {hasActiveFilters ? t("emptySearch") : t("empty")}
+                    </p>
+                    <Button asChild>
+                      <Link href={`/${locale}/victims/new`}>
+                        {t("form.title")}
+                      </Link>
+                    </Button>
+                  </div>
+                )
+              : undefined
+          }
         />
-      )}
+      </div>
     </section>
   );
 }

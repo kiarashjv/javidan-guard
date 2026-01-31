@@ -44,12 +44,19 @@ interface DataTableProps<T> {
   };
   showStatusFilter?: boolean;
   statusOptions?: { value: string; label: string }[];
+  initialStatusFilter?: string;
+  onStatusFilterChange?: (value: string) => void;
   filters?: {
     key: keyof T & string;
     label: string;
     options?: { value: string; label: string }[];
   }[];
+  initialFilterValues?: Record<string, string>;
+  onFilterValuesChange?: (values: Record<string, string>) => void;
   direction?: "rtl" | "ltr";
+  isLoading?: boolean;
+  loadingRows?: number;
+  renderEmpty?: () => React.ReactNode;
   labels?: {
     all: string;
     results: (
@@ -86,8 +93,15 @@ export function DataTable<T extends Record<string, unknown>>({
   pagination,
   showStatusFilter = false,
   statusOptions = [],
+  initialStatusFilter = "all",
+  onStatusFilterChange,
   filters = [],
+  initialFilterValues,
+  onFilterValuesChange,
   direction = "ltr",
+  isLoading = false,
+  loadingRows = 8,
+  renderEmpty,
   labels = {
     all: "All",
     results: (from, to, filtered, total) =>
@@ -109,15 +123,27 @@ export function DataTable<T extends Record<string, unknown>>({
   const [localSearchQuery, setLocalSearchQuery] = React.useState("");
   const effectiveSearchQuery = searchQuery ?? localSearchQuery;
   const isServerSearch = searchMode === "server";
-  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [statusFilter, setStatusFilter] = React.useState<string>(
+    initialStatusFilter,
+  );
   const [sortKey, setSortKey] = React.useState<(keyof T & string) | null>(null);
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
     "asc",
   );
   const [filterValues, setFilterValues] = React.useState<
     Record<string, string>
-  >({});
+  >(initialFilterValues ?? {});
   const pageSizeState = pageSize;
+
+  React.useEffect(() => {
+    setStatusFilter(initialStatusFilter);
+  }, [initialStatusFilter]);
+
+  React.useEffect(() => {
+    if (initialFilterValues) {
+      setFilterValues(initialFilterValues);
+    }
+  }, [initialFilterValues]);
 
   // Filter data based on search and status
   const filteredData = React.useMemo(() => {
@@ -229,7 +255,13 @@ export function DataTable<T extends Record<string, unknown>>({
             <div className="text-xs font-medium text-muted-foreground">
               {labels.status}
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                onStatusFilterChange?.(value);
+              }}
+            >
               <SelectTrigger
                 className={`min-w-30 ${
                   direction === "rtl" ? "text-right flex-row-reverse" : ""
@@ -277,10 +309,14 @@ export function DataTable<T extends Record<string, unknown>>({
                 <Select
                   value={filterValues[filter.key] ?? "all"}
                   onValueChange={(value) =>
-                    setFilterValues((prev) => ({
-                      ...prev,
-                      [filter.key]: value,
-                    }))
+                    setFilterValues((prev) => {
+                      const next = {
+                        ...prev,
+                        [filter.key]: value,
+                      };
+                      onFilterValuesChange?.(next);
+                      return next;
+                    })
                   }
                 >
                   <SelectTrigger
@@ -323,7 +359,7 @@ export function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {/* Table */}
-      <div className="border rounded-2xl overflow-hidden">
+      <div className="border rounded-2xl overflow-hidden min-h-[520px]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -348,13 +384,28 @@ export function DataTable<T extends Record<string, unknown>>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: loadingRows }).map((_, rowIndex) => (
+                <TableRow
+                  key={`loading-${rowIndex}`}
+                  className="odd:bg-muted/30 even:bg-transparent"
+                >
+                  {columns.map((column, colIndex) => (
+                    <TableCell key={`${column.key}-${colIndex}`}>
+                      <div className="h-4 w-full animate-pulse rounded bg-muted/60" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-12 text-muted-foreground"
+                  className="p-0 text-center text-muted-foreground"
                 >
-                  {labels.noResults}
+                  <div className="flex min-h-[360px] w-full items-center justify-center px-6 py-12">
+                    {renderEmpty ? renderEmpty() : labels.noResults}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
